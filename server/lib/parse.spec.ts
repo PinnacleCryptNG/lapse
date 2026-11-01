@@ -250,3 +250,17 @@ describe("parseEmails on real-world copies", () => {
     expect(r.skipped[0]).toMatch(/no subscription/);
   });
 });
+
+describe("parseEmails on a mixed paste", () => {
+  it("keeps a headerless email separate from the From: emails after it", () => {
+    const found = parseEmails(
+      "Netflix\n\nYour membership has been renewed\n\nWe've charged ₦7,000 for your Standard plan.\n\nNext billing date\n3 December 2026\n\nFrom: Apple <no_reply@email.apple.com>\nSubject: Your receipt from Apple.\n\niCloud+ with 50 GB of Storage (Monthly)\nRenews 2 Dec 2026\nTOTAL N1,500.00\n\nFrom: Spotify <no-reply@spotify.com>\nSubject: Your Spotify Premium receipt\nPremium Individual $11.99/month. Your next payment is on December 6, 2026.",
+      "2026-11-01",
+    );
+    expect(found.map((f) => [f.merchant, f.date])).toEqual([
+      ["Netflix", "2026-12-03"],
+      ["iCloud", "2026-12-02"],
+      ["Spotify", "2026-12-06"],
+    ]);
+  });
+});

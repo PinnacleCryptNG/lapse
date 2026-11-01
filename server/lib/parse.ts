@@ -384,13 +384,20 @@ function groupByMerchant(paras: string[]): string[] {
 /** Split pasted text into emails: explicit --- separators, then "From:" headers, then merchant changes. */
 export function splitEmails(text: string): string[] {
   const norm = text.replace(/\r\n?/g, "\n");
-  let parts = norm.split(EMAIL_SEP);
-  if (parts.length === 1) {
-    const starts = [...norm.matchAll(/^(?:from|de|von)\s*:/gim)].map((m) => m.index ?? 0);
-    if (starts.length > 1) parts = starts.map((st, k) => norm.slice(k === 0 ? 0 : st, starts[k + 1] ?? norm.length));
-    else if (starts.length === 0) parts = groupByMerchant(paragraphs(norm));
-  }
-  return parts.map((p) => p.trim()).filter(Boolean);
+  return norm
+    .split(EMAIL_SEP)
+    .flatMap(splitOnHeaders)
+    .map((p) => p.trim())
+    .filter(Boolean);
+}
+
+/** Each "From:" header starts an email; text before the first one is headerless copy grouped by merchant. */
+function splitOnHeaders(part: string): string[] {
+  const starts = [...part.matchAll(/^(?:from|de|von)\s*:/gim)].map((m) => m.index ?? 0);
+  if (!starts.length) return groupByMerchant(paragraphs(part));
+  const preamble = part.slice(0, starts[0]);
+  const blocks = starts.map((st, k) => part.slice(st, starts[k + 1] ?? part.length));
+  return [...(preamble.trim() ? groupByMerchant(paragraphs(preamble)) : []), ...blocks];
 }
 
 function cadenceFromText(text: string): Cadence {
