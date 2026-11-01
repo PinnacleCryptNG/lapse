@@ -16,6 +16,7 @@ import { AgentNativeIcon } from "@agent-native/toolkit/app/shared/AgentNativeIco
 import {
   IconEdit,
   IconHome,
+  IconReceipt2,
   IconLayoutSidebarLeftCollapse,
   IconLayoutSidebarLeftExpand,
   IconLoader2,
@@ -115,6 +116,28 @@ function persistActiveThreadId(threadId: string) {
   try {
     localStorage.setItem(CHAT_ACTIVE_THREAD_KEY, threadId);
   } catch {}
+}
+
+function LedgerNavLink({ collapsed }: { collapsed: boolean }) {
+  const location = useLocation();
+  const active = location.pathname.startsWith("/ledger");
+  return (
+    <Link
+      to="/ledger"
+      aria-current={active ? "page" : undefined}
+      aria-label={collapsed ? "Ledger" : undefined}
+      className={cn(
+        "flex items-center text-sidebar-accent-foreground transition-colors hover:bg-sidebar-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring",
+        active && "bg-sidebar-accent",
+        collapsed
+          ? "size-8 justify-center rounded-md"
+          : "h-8 w-full gap-3 rounded-lg px-3 text-sm font-medium",
+      )}
+    >
+      <IconReceipt2 className="size-4 shrink-0" strokeWidth={1.8} />
+      <span className={collapsed ? "sr-only" : "truncate"}>Ledger</span>
+    </Link>
+  );
 }
 
 function HomeNavLink({ collapsed }: { collapsed: boolean }) {
@@ -407,6 +430,7 @@ export function Sidebar({
           collapsed ? "items-center gap-1 px-1 py-2" : "pt-1",
         )}
       >
+        <LedgerNavLink collapsed={collapsed} />
         <HomeNavLink collapsed={collapsed} />
         <ChatThreadsSection collapsed={collapsed} />
       </nav>
