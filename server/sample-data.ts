@@ -72,20 +72,19 @@ function expand(today: string, recurring: Recurring[], oneOffs: OneOff[]) {
 
 const STATEMENT_RECURRING: Recurring[] = [
   { descriptor: "NFLX*DIGITAL LAGOS", currency: "NGN", amounts: [7000, 7000, 7000], dueInDays: 2 },
-  { descriptor: "SPOTIFY P1F2C3 LONDON", currency: "GBP", amounts: [11.99, 11.99, 11.99], dueInDays: 5 },
-  { descriptor: "SPOTIFY USA 8774", currency: "USD", amounts: [11.99, 11.99, 11.99], dueInDays: 9 },
-  { descriptor: "GOOGLE*YOUTUBE PREMIUM", currency: "USD", amounts: [13.99, 13.99, 13.99], dueInDays: 12 },
-  { descriptor: "ADOBE *CREATIVE CLD DUBLIN", currency: "EUR", amounts: [26.99, 26.99, 26.99], dueInDays: 20 },
-  { descriptor: "CANVA* 104-2219", currency: "USD", amounts: [12.99, 12.99, 15.0], dueInDays: 6 },
+  { descriptor: "SPOTIFY P1F2C3 LAGOS", currency: "NGN", amounts: [1900, 1900, 1900], dueInDays: 5 },
+  { descriptor: "GOOGLE*YOUTUBE PREMIUM", currency: "NGN", amounts: [2200, 2200, 2200], dueInDays: 12 },
+  { descriptor: "ADOBE *CREATIVE CLD", currency: "NGN", amounts: [32000, 32000, 32000], dueInDays: 20 },
+  { descriptor: "CANVA* 104-2219", currency: "NGN", amounts: [9500, 9500, 11000], dueInDays: 6 },
   { descriptor: "APPLE.COM/BILL ICLOUD", currency: "NGN", amounts: [1500, 1500, 1500], dueInDays: 1 },
   { descriptor: "DSTV MULTICHOICE LAGOS", currency: "NGN", amounts: [15700, 15700, 15700], dueInDays: 14 },
-  { descriptor: "NOTION LABS INC", currency: "USD", amounts: [10, 10, 10], dueInDays: 25 },
-  { descriptor: "UBER *ONE NAIROBI", currency: "KES", amounts: [499, 499, 499], dueInDays: 17 },
-  { descriptor: "AUDIBLE UK", currency: "GBP", amounts: [7.99, 7.99, 7.99], dueInDays: 28 },
+  { descriptor: "NOTION LABS INC", currency: "NGN", amounts: [16000, 16000, 16000], dueInDays: 25 },
+  { descriptor: "UBER *ONE LAGOS", currency: "NGN", amounts: [2500, 2500, 2500], dueInDays: 17 },
+  { descriptor: "AUDIBLE", currency: "NGN", amounts: [6500, 6500, 6500], dueInDays: 28 },
 ];
 
 const STATEMENT_ONE_OFFS: OneOff[] = [
-  { descriptor: "FITPULSE GYM APP MUMBAI", currency: "INR", amount: 499, daysAgo: 10 },
+  { descriptor: "FITPULSE GYM APP", currency: "NGN", amount: 4500, daysAgo: 10 },
   { descriptor: "JUMIA*ORDER 77812", currency: "NGN", amount: 18900, daysAgo: 64 },
   { descriptor: "SHOPRITE IKEJA", currency: "NGN", amount: 23450, daysAgo: 41 },
   { descriptor: "BOLT*RIDE LAGOS", currency: "NGN", amount: 2350, daysAgo: 77 },
@@ -95,15 +94,14 @@ const STATEMENT_ONE_OFFS: OneOff[] = [
 
 const CSV_RECURRING: Recurring[] = [
   { descriptor: "NFLX*DIGITAL LAGOS", currency: "NGN", amounts: [7000, 7000, 7000], dueInDays: 2 },
-  { descriptor: "SPOTIFY P1F2C3 LONDON", currency: "GBP", amounts: [11.99, 11.99, 11.99], dueInDays: 5 },
+  { descriptor: "SPOTIFY P1F2C3 LAGOS", currency: "NGN", amounts: [1900, 1900, 1900], dueInDays: 5 },
   { descriptor: "SHOWMAX*PREMIUM", currency: "NGN", amounts: [4400, 4400, 4400], dueInDays: 4 },
-  { descriptor: "AMZN PRIME UK", currency: "GBP", amounts: [8.99, 8.99, 8.99], dueInDays: 8 },
-  { descriptor: "DISNEY PLUS AMSTERDAM", currency: "EUR", amounts: [9.99, 9.99, 9.99], dueInDays: 15 },
-  { descriptor: "DROPBOX*PLUS", currency: "USD", amounts: [11.99, 11.99, 11.99], dueInDays: 22 },
-  { descriptor: "OPENAI *CHATGPT SUBSCR", currency: "USD", amounts: [20, 20, 20], dueInDays: 3 },
+  { descriptor: "AMZN PRIME VIDEO", currency: "NGN", amounts: [3500, 3500, 3500], dueInDays: 8 },
+  { descriptor: "DISNEY PLUS", currency: "NGN", amounts: [5000, 5000, 5000], dueInDays: 15 },
+  { descriptor: "DROPBOX*PLUS", currency: "NGN", amounts: [14000, 14000, 14000], dueInDays: 22 },
+  { descriptor: "OPENAI *CHATGPT SUBSCR", currency: "NGN", amounts: [30000, 30000, 30000], dueInDays: 3 },
   { descriptor: "GOOGLE *GOOGLE ONE", currency: "NGN", amounts: [900, 900, 900], dueInDays: 11 },
 ];
-
 const CSV_ONE_OFFS: OneOff[] = [
   { descriptor: "BOLT*RIDE LAGOS", currency: "NGN", amount: 2350, daysAgo: 81 },
   { descriptor: "BOLT*RIDE LAGOS", currency: "NGN", amount: 3100, daysAgo: 66 },
@@ -142,7 +140,7 @@ export function sampleCsvText(today = todayIso()): string {
 
 export function sampleEmailsText(today = todayIso()): string {
   return [
-    `From: FocusFlow Pro <billing@focusflow.example>\nSubject: Your trial is ending\n\nYour 7-day free trial of FocusFlow Pro ends on ${longDate(addDays(today, 3))}. After that you'll be charged $59.99/year.`,
-    `From: PixelVault Cloud <no-reply@pixelvault.example>\nSubject: Upcoming renewal\n\nYour annual plan for PixelVault Cloud renews on ${longDate(addDays(today, 10))} for €47.88.`,
+    `From: FocusFlow Pro <billing@focusflow.example>\nSubject: Your trial is ending\n\nYour 7-day free trial of FocusFlow Pro ends on ${longDate(addDays(today, 3))}. After that you'll be charged ₦45,000/year.`,
+    `From: PixelVault Cloud <no-reply@pixelvault.example>\nSubject: Upcoming renewal\n\nYour annual plan for PixelVault Cloud renews on ${longDate(addDays(today, 10))} for ₦38,000.`,
   ].join("\n---\n");
 }

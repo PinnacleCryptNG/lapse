@@ -59,8 +59,8 @@ function DemoButton() {
 const ROWS = [
   { name: "iCloud+", amt: "₦1,500", due: "Tomorrow" },
   { name: "Netflix", amt: "₦7,000", due: "In 2 days" },
-  { name: "FocusFlow Pro", amt: "$59.99", due: "Trial ends Fri", hit: true },
-  { name: "Spotify", amt: "£11.99", due: "In 5 days" },
+  { name: "FocusFlow Pro", amt: "₦45,000", due: "Trial ends Fri", hit: true },
+  { name: "Spotify", amt: "₦1,900", due: "In 5 days" },
 ];
 
 function Preview() {

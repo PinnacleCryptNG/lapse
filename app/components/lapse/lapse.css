@@ -237,3 +237,5 @@
 @keyframes lp-grow { from { width: 0; } }
 .lp-ask { border-color: #2a2636; color: #f7f6fa; font-family: "Geist Variable", Geist, Inter, system-ui, sans-serif; }
 .lp-ask:hover { background: #17141f; } .lp-ask svg { color: #9a8cff; }
+.lp-save .lp-save__fig { display: block; margin: 6px 0 4px; }
+.lp-save__extra { display: block; margin-bottom: 4px; color: var(--soft); font-size: 14px; font-variant-numeric: tabular-nums; }
