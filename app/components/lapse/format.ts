@@ -112,3 +112,25 @@ export const STATUS_WORD: Record<Status, string> = {
   cancelled: "Cancelled",
   snoozed: "Later",
 };
+
+export const CADENCE_WORD: Record<Sub["cadence"], string> = {
+  weekly: "Weekly",
+  monthly: "Monthly",
+  quarterly: "Quarterly",
+  yearly: "Yearly",
+  unknown: "Recurring",
+};
+
+export function hueFor(name: string): number {
+  let h = 0;
+  for (const c of name) h = (h * 31 + c.charCodeAt(0)) % 360;
+  return h;
+}
+
+export function dueShort(days: number | null): string {
+  if (days === null) return "no date";
+  if (days < 0) return `${-days}d ago`;
+  if (days === 0) return "today";
+  if (days === 1) return "tomorrow";
+  return `in ${days} days`;
+}

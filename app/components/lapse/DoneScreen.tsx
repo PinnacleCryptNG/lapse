@@ -1,10 +1,11 @@
 import { sendToAgentChat } from "@agent-native/core/client/agent-chat";
 import { useActionQuery } from "@agent-native/core/client/hooks";
-import { IconCopy, IconMail } from "@tabler/icons-react";
+import { IconCheck, IconChevronDown, IconCopy, IconMail, IconSparkles } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import { dueText, type Kit, LANGUAGES, money, PER, type Status, type Sub, yearlyTotals } from "./format";
+import { Avatar } from "./Avatar";
+import { dueShort, type Kit, LANGUAGES, money, PER, type Status, type Sub, yearlyTotals } from "./format";
 import { useTicker } from "./useTicker";
 
 function Figure({ currency, minor }: { currency: string; minor: number }) {
@@ -65,80 +66,74 @@ function CancelItem({
     ? `mailto:?subject=${encodeURIComponent(kit.messageSubject ?? `Cancel my ${row.merchant} subscription`)}&body=${encodeURIComponent(kit.messageBody)}`
     : "";
 
+  const status = done ? "Cancelled" : kit ? "Message ready" : writing ? "Writing…" : "Get message";
   return (
     <li
-      className={`lp-cancel${done ? " is-done" : ""}${flashed ? " is-agent" : ""}`}
+      className={`lp-cancel${done ? " is-done" : ""}${open ? " is-open" : ""}${flashed ? " is-agent" : ""}`}
       style={{ "--i": index } as React.CSSProperties}
     >
-      <div className="lp-cancel__head">
-        <div>
+      <button type="button" className="lp-cancel__row" onClick={() => setOpen((o) => !o)} aria-expanded={open} disabled={done}>
+        <Avatar name={row.merchant} size={36} />
+        <span className="lp-cancel__id">
           <b className="lp-cancel__name">{row.merchant}</b>
           <span className="lp-cancel__meta">
             {money(row.amountMinor, row.currency)}
-            {PER[row.cadence]} · {done ? "cancelled" : dueText(row.daysLeft).toLowerCase()}
+            {PER[row.cadence]} · {done ? "cancelled" : dueShort(row.daysLeft)}
           </span>
-        </div>
-        {done ? (
-          <span className="lp-tag lp-tag--done">Cancelled</span>
-        ) : kit ? (
-          <span className="lp-tag lp-tag--ready">Message ready</span>
-        ) : null}
-      </div>
+        </span>
+        <span className={`lp-cancel__status${kit && !done ? " is-ready" : ""}${done ? " is-done" : ""}`}>
+          {done && <IconCheck size={14} stroke={2.4} />}
+          {status}
+        </span>
+        {!done && <IconChevronDown size={16} stroke={1.8} className="lp-cancel__chev" />}
+      </button>
 
-      {!done && !kit && (
-        <div className="lp-cancel__write">
-          <select className="lp-select" value={lang} aria-label="Language" onChange={(e) => setLang(e.target.value)}>
-            {LANGUAGES.map((l) => (
-              <option key={l}>{l}</option>
-            ))}
-          </select>
-          <button type="button" className="lp-btn lp-btn--dark" onClick={write} disabled={writing}>
-            {writing ? "Lapse is writing…" : "Write cancel message"}
-          </button>
-        </div>
-      )}
-
-      {!done && kit && (
-        <>
-          <button type="button" className="lp-link" onClick={() => setOpen((o) => !o)}>
-            {open ? "Hide" : "Show"} the steps and message
-          </button>
-          {open && (
-            <div className="lp-kit">
+      {open && !done && (
+        <div className="lp-cancel__body">
+          {kit ? (
+            <>
               <Steps md={kit.stepsMd} />
               <div className="lp-kit__msg">
                 {kit.messageSubject && <b>{kit.messageSubject}</b>}
                 <p>{kit.messageBody}</p>
               </div>
-              <small>Check the steps on {row.merchant}&apos;s own site. Lapse never sends this; you do.</small>
+              <div className="lp-cancel__actions">
+                <button
+                  type="button"
+                  className="lp-btn lp-btn--soft"
+                  onClick={async () => {
+                    await navigator.clipboard.writeText(full);
+                    toast.success("Message copied");
+                  }}
+                >
+                  <IconCopy size={15} stroke={1.9} /> Copy
+                </button>
+                <a className="lp-btn lp-btn--soft" href={mailto}>
+                  <IconMail size={15} stroke={1.9} /> Open in mail
+                </a>
+              </div>
+              <small className="lp-kit__note">Check the steps on {row.merchant}&apos;s site. Lapse never sends this; you do.</small>
+            </>
+          ) : (
+            <div className="lp-cancel__write">
+              <select className="lp-select" value={lang} aria-label="Language" onChange={(e) => setLang(e.target.value)}>
+                {LANGUAGES.map((l) => (
+                  <option key={l}>{l}</option>
+                ))}
+              </select>
+              <button type="button" className="lp-btn lp-btn--soft" onClick={write} disabled={writing}>
+                <IconSparkles size={15} stroke={1.9} /> {writing ? "Lapse is writing…" : "Write it with Lapse"}
+              </button>
             </div>
           )}
-          <div className="lp-cancel__actions">
-            <button
-              type="button"
-              className="lp-btn lp-btn--dark"
-              onClick={async () => {
-                await navigator.clipboard.writeText(full);
-                toast.success("Message copied");
-              }}
-            >
-              <IconCopy size={16} stroke={1.9} /> Copy message
+          <div className="lp-cancel__foot">
+            <button type="button" className="lp-btn lp-btn--primary lp-btn--sm" onClick={() => onStatus(row, "cancelled")}>
+              I&apos;ve cancelled it
             </button>
-            <a className="lp-btn lp-btn--ghost" href={mailto}>
-              <IconMail size={16} stroke={1.9} /> Open in mail
-            </a>
+            <button type="button" className="lp-link" onClick={() => onStatus(row, "keep")}>
+              Keep instead
+            </button>
           </div>
-        </>
-      )}
-
-      {!done && (
-        <div className="lp-cancel__foot">
-          <button type="button" className="lp-btn lp-btn--keep lp-btn--sm" onClick={() => onStatus(row, "cancelled")}>
-            I&apos;ve cancelled it
-          </button>
-          <button type="button" className="lp-link" onClick={() => onStatus(row, "keep")}>
-            Keep it instead
-          </button>
         </div>
       )}
     </li>
@@ -172,15 +167,16 @@ export function DoneScreen({
     <section className="lp-done lp-enter">
       {cancelling.length ? (
         <div className="lp-save">
-          <span className="lp-save__lead">You&apos;ll save</span>
+          <span className="lp-save__lead">You&apos;ll save each year</span>
           <div className="lp-save__figs">
             {yearly.map((t) => (
               <Figure key={t.currency} currency={t.currency} minor={t.amountMinor} />
             ))}
           </div>
           <span className="lp-save__sub">
-            a year by cancelling {cancelling.length} subscription{cancelling.length === 1 ? "" : "s"}
-            {doneCount ? ` · ${doneCount} done` : ""}
+            {doneCount === cancelling.length
+              ? "All cancelled. Nice."
+              : `${doneCount} of ${cancelling.length} cancelled. Open each one for its cancel message.`}
           </span>
         </div>
       ) : (
@@ -193,13 +189,13 @@ export function DoneScreen({
       {cancelling.length > 0 && (
         <>
           <div className="lp-row-head">
-            <h2 className="lp-h2">Cancel these</h2>
+            <h2 className="lp-h2">To cancel</h2>
             <button
               type="button"
               className="lp-link"
               onClick={() => onAsk("Write the cancel messages for everything on my cancel list that doesn't have one yet, in English.")}
             >
-              Write all with Lapse
+              Write all messages
             </button>
           </div>
           <ol className="lp-cancels">

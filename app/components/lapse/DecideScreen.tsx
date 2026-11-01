@@ -1,33 +1,12 @@
 import { IconCheck, IconX } from "@tabler/icons-react";
 import { useEffect, useRef, useState } from "react";
 
-import { dueText, longDate, money, PER, type Sub, tipFor } from "./format";
+import { Avatar } from "./Avatar";
+import { CADENCE_WORD, dueText, longDate, money, PER, type Sub, tipFor } from "./format";
+import { LapseMark } from "./Logo";
 
 const SWIPE = 110;
 const LEAVE_MS = 300;
-
-function Countdown({ days }: { days: number | null }) {
-  const r = 15;
-  const c = 2 * Math.PI * r;
-  const left = days === null ? 30 : Math.max(0, Math.min(30, days));
-  const hot = days !== null && days <= 3;
-  return (
-    <div className={`lp-ring${hot ? " is-hot" : ""}`}>
-      <svg viewBox="0 0 38 38" aria-hidden>
-        <circle className="lp-ring__track" cx="19" cy="19" r={r} />
-        <circle
-          className="lp-ring__fill"
-          cx="19"
-          cy="19"
-          r={r}
-          style={{ strokeDasharray: c, strokeDashoffset: c * (1 - left / 30), "--c": c } as React.CSSProperties}
-        />
-      </svg>
-      <span className="lp-ring__n">{days === null ? "?" : Math.max(days, 0)}</span>
-      <span className="lp-ring__u">{days === 1 ? "day" : "days"}</span>
-    </div>
-  );
-}
 
 function TopCard({
   row,
@@ -50,6 +29,8 @@ function TopCard({
     setDx(0);
   };
   const drag = Math.max(-1, Math.min(1, dx / SWIPE));
+  const hot = row.daysLeft !== null && row.daysLeft <= 3;
+  const urgency = row.daysLeft === null ? 0 : Math.round((1 - Math.max(0, Math.min(30, row.daysLeft)) / 30) * 100);
   return (
     <article
       className={`lp-card lp-card--top${leaving ? ` is-leaving-${leaving}` : ""}${flashed ? " is-agent" : ""}`}
@@ -70,26 +51,37 @@ function TopCard({
       <span className="lp-card__stamp lp-card__stamp--cancel" style={{ opacity: Math.max(0, -drag) }} aria-hidden>
         CANCEL
       </span>
-      <div className="lp-card__tags">
-        {row.kind === "trial" && <span className="lp-tag lp-tag--trial">Free trial</span>}
-        {row.status === "unsure" && <span className="lp-tag lp-tag--unsure">Check this one</span>}
-        {flashed && <span className="lp-tag lp-tag--agent">Lapse just updated this</span>}
+      <div className="lp-card__head">
+        <Avatar name={row.merchant} size={44} />
+        <div className="lp-card__id">
+          <h2 className="lp-card__name">{row.merchant}</h2>
+          <span className="lp-card__sub">
+            {CADENCE_WORD[row.cadence]} · {row.kind === "trial" ? "Free trial" : "Subscription"}
+          </span>
+        </div>
       </div>
-      <h2 className="lp-card__name">{row.merchant}</h2>
-      <p className="lp-card__price">
+      {(flashed || row.status === "unsure") && (
+        <div className="lp-card__tags">
+          {row.status === "unsure" && <span className="lp-tag lp-tag--unsure">Check this one</span>}
+          {flashed && <span className="lp-tag lp-tag--agent">Updated by Lapse</span>}
+        </div>
+      )}
+      <p className="lp-card__amount">
         <span className="lp-num">{money(row.amountMinor, row.currency)}</span>
         <span className="lp-per">{PER[row.cadence]}</span>
       </p>
-      <div className="lp-card__when">
-        <Countdown days={row.daysLeft} />
-        <div>
+      <div className={`lp-due${hot ? " is-hot" : ""}`}>
+        <div className="lp-due__row">
           <b>{dueText(row.daysLeft)}</b>
           <span>{longDate(row.nextChargeDate)}</span>
         </div>
+        <span className="lp-due__bar">
+          <i style={{ width: `${urgency}%` }} />
+        </span>
       </div>
       <p className="lp-card__tip">
-        <span>Lapse</span>
-        {tipFor(row)}
+        <LapseMark size={14} />
+        <span>{tipFor(row)}</span>
       </p>
     </article>
   );
@@ -154,7 +146,7 @@ export function DecideScreen({
     <section className="lp-decide">
       <div className="lp-progress">
         <span>
-          <b>{queue.length}</b> left to decide
+          <b>{decided + 1}</b> of {total}
         </span>
         <span className="lp-progress__bar" aria-hidden>
           <span style={{ width: `${total ? (decided / total) * 100 : 0}%` }} />
@@ -173,10 +165,10 @@ export function DecideScreen({
       </div>
       <div className="lp-choices">
         <button type="button" className="lp-btn lp-btn--cancel" onClick={() => decide("cancel")}>
-          <IconX size={20} stroke={2.6} /> Cancel it
+          <IconX size={18} stroke={2.4} /> Cancel
         </button>
         <button type="button" className="lp-btn lp-btn--keep" onClick={() => decide("keep")}>
-          <IconCheck size={20} stroke={2.6} /> Keep
+          <IconCheck size={18} stroke={2.4} /> Keep
         </button>
       </div>
       <div className="lp-minor">
@@ -189,7 +181,7 @@ export function DecideScreen({
           </button>
         )}
       </div>
-      <p className="lp-hint">Swipe or use ← →</p>
+      <p className="lp-hint">Swipe, or use ← →</p>
     </section>
   );
 }

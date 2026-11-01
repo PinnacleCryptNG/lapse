@@ -1,6 +1,7 @@
 import { sendToAgentChat } from "@agent-native/core/client/agent-chat";
 import { useActionMutation, useActionQuery, useDbSync, writeClientAppState } from "@agent-native/core/client/hooks";
 import { IconSparkles } from "@tabler/icons-react";
+import { useSetHeaderActions, useSetPageTitle } from "@agent-native/toolkit/app-shell";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router";
@@ -188,24 +189,22 @@ export function LapseApp() {
 
   const ask = (message: string) => sendToAgentChat({ message, submit: true });
 
+  useSetPageTitle(<LapseLogo size={15} />);
+  useSetHeaderActions(
+    rows.length > 0 ? (
+      <button
+        type="button"
+        className="lp-ask"
+        onClick={() => ask("Go through my undecided subscriptions with me, one at a time, soonest charge first.")}
+      >
+        <IconSparkles size={15} stroke={1.8} /> Ask Lapse
+      </button>
+    ) : null,
+  );
+
   return (
     <div className="lp">
       <div className="lp-col">
-        <header className="lp-top">
-          <a className="lp-brand" href="/" aria-label="Lapse home">
-            <LapseLogo size={18} />
-          </a>
-          {rows.length > 0 && (
-            <button
-              type="button"
-              className="lp-ask"
-              onClick={() => ask("Go through my undecided subscriptions with me, one at a time, soonest charge first.")}
-            >
-              <IconSparkles size={16} stroke={1.8} /> Ask Lapse
-            </button>
-          )}
-        </header>
-
         <nav className="lp-steps" aria-label="Steps">
           {STEPS.map((s, i) => {
             const enabled = s.id === "add" || rows.length > 0;
@@ -260,7 +259,7 @@ export function LapseApp() {
         )}
 
         {isSample && screen !== "add" && <p className="lp-sample">Sample data – illustrative amounts</p>}
-        <footer className="lp-foot">Lapse never sends or cancels anything for you. You stay in control.</footer>
+        {screen === "done" && <footer className="lp-foot">Lapse never sends or cancels anything for you.</footer>}
       </div>
     </div>
   );
