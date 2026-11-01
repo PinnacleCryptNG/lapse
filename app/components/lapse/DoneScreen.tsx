@@ -59,6 +59,7 @@ function CancelItem({
     sendToAgentChat({
       message: `Write the cancel message for ${row.merchant} (subscription ${row.id}) in ${lang}.`,
       submit: true,
+      openSidebar: true,
     });
   };
   const full = kit ? (kit.messageSubject ? `Subject: ${kit.messageSubject}\n\n` : "") + kit.messageBody : "";

@@ -187,7 +187,7 @@ export function LapseApp() {
     go("decide");
   };
 
-  const ask = (message: string) => sendToAgentChat({ message, submit: true });
+  const ask = (message: string) => sendToAgentChat({ message, submit: true, openSidebar: true });
 
   useSetPageTitle(<LapseLogo size={15} />);
   useSetHeaderActions(
