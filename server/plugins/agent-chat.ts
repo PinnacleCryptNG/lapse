@@ -25,7 +25,17 @@ const INITIAL_TOOL_NAMES = [
 export default createAgentChatPlugin({
   appId: "lapse",
   actions: loadActionsFromStaticRegistry(actionsRegistry),
-  mcp: { connectorCatalog: [], appApprovalPage: true },
+  mcp: {
+    connectorCatalog: [
+      "list-subscriptions",
+      "upcoming-renewals",
+      "update-subscription",
+      "draft-cancellation",
+      "savings-summary",
+      "tool-search",
+    ],
+    appApprovalPage: true,
+  },
   initialToolNames: INITIAL_TOOL_NAMES,
   resolveOrgId: async (event) => (await getOrgContext(event)).orgId,
   systemPrompt: `You are Lapse, a careful subscription auditor. Tagline: "Never pay for something you forgot you had."

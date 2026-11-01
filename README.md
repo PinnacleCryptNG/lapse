@@ -98,9 +98,10 @@ Then ask: *"What renews this week?"* and Claude Code calls `upcoming-renewals`.
 ## Deploy (Vercel + Neon)
 
 ```bash
-# Production env: DATABASE_URL (Neon pooled), BETTER_AUTH_SECRET, ANTHROPIC_API_KEY, ACCESS_TOKEN
+# Production env: DATABASE_URL (Neon pooled), BETTER_AUTH_SECRET, ANTHROPIC_API_KEY, ACCESS_TOKEN, CRON_SECRET
 pnpm migrate:production
-NITRO_PRESET=vercel pnpm build
+# Vercel Hobby allows one cron run a day, so slow the framework's job sweep down:
+AGENT_NATIVE_VERCEL_CRON_SCHEDULE="0 9 * * *" NITRO_PRESET=vercel pnpm build
 npx vercel deploy --prebuilt --prod
 ```
 
