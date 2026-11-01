@@ -7,18 +7,18 @@ const SWIPE = 110;
 const LEAVE_MS = 300;
 
 function Countdown({ days }: { days: number | null }) {
-  const r = 26;
+  const r = 15;
   const c = 2 * Math.PI * r;
   const left = days === null ? 30 : Math.max(0, Math.min(30, days));
   const hot = days !== null && days <= 3;
   return (
     <div className={`lp-ring${hot ? " is-hot" : ""}`}>
-      <svg viewBox="0 0 64 64" aria-hidden>
-        <circle className="lp-ring__track" cx="32" cy="32" r={r} />
+      <svg viewBox="0 0 38 38" aria-hidden>
+        <circle className="lp-ring__track" cx="19" cy="19" r={r} />
         <circle
           className="lp-ring__fill"
-          cx="32"
-          cy="32"
+          cx="19"
+          cy="19"
           r={r}
           style={{ strokeDasharray: c, strokeDashoffset: c * (1 - left / 30), "--c": c } as React.CSSProperties}
         />

@@ -193,7 +193,7 @@ export function LapseApp() {
       <div className="lp-col">
         <header className="lp-top">
           <a className="lp-brand" href="/" aria-label="Lapse home">
-            <LapseLogo size={22} />
+            <LapseLogo size={18} />
           </a>
           {rows.length > 0 && (
             <button

@@ -1,5 +1,6 @@
 @import "@fontsource-variable/inter";
-@import "@fontsource-variable/bricolage-grotesque";
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
 
 @import "tailwindcss";
 @import "@agent-native/toolkit/styles.css";
@@ -9,33 +10,33 @@
 
 :root {
   color-scheme: dark;
-  --background: 250 45% 11%;
+  --background: 255 26% 7%;
   --foreground: 270 100% 98%;
-  --card: 252 40% 14%;
+  --card: 255 20% 11%;
   --card-foreground: 270 100% 98%;
-  --popover: 252 40% 14%;
+  --popover: 255 20% 11%;
   --popover-foreground: 270 100% 98%;
   --primary: 270 100% 98%;
   --primary-foreground: 250 45% 11%;
-  --secondary: 252 35% 19%;
+  --secondary: 255 16% 15%;
   --secondary-foreground: 270 100% 98%;
-  --muted: 252 35% 19%;
+  --muted: 255 16% 15%;
   --muted-foreground: 250 22% 72%;
-  --accent: 252 35% 21%;
+  --accent: 255 16% 17%;
   --accent-foreground: 270 100% 98%;
   --destructive: 0 91% 71%;
   --destructive-foreground: 0 0% 98%;
-  --border: 252 30% 23%;
-  --input: 252 30% 25%;
+  --border: 255 14% 18%;
+  --input: 255 14% 20%;
   --ring: 246 100% 74%;
   --radius: 0.5rem;
-  --sidebar-background: 251 42% 13%;
+  --sidebar-background: 255 24% 8%;
   --sidebar-foreground: 250 22% 76%;
   --sidebar-primary: 270 100% 98%;
   --sidebar-primary-foreground: 250 45% 11%;
-  --sidebar-accent: 252 35% 20%;
+  --sidebar-accent: 255 16% 15%;
   --sidebar-accent-foreground: 270 100% 98%;
-  --sidebar-border: 252 30% 21%;
+  --sidebar-border: 255 14% 15%;
   --sidebar-ring: 246 100% 74%;
   --chat-sidebar-width: 17.5rem;
   --chat-sidebar-content-inset: 0.5rem;
