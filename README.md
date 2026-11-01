@@ -11,6 +11,11 @@ Lapse never sends emails, submits forms or contacts any service. Cancelling
 produces a **draft kit**: steps and a short message in your language. You copy
 the message and send it yourself.
 
+**Try it:** open https://lapse-agent.vercel.app and tap **Try the demo, no
+sign-up**. It creates a private throwaway account and loads the sample
+statement. A three-step guide on the ledger walks you through add → check →
+cancel.
+
 Built for the Builder.io Agent-Native Hackathon with
 [`@agent-native/core`](https://www.agent-native.com/docs/).
 

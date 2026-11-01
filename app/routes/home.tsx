@@ -1,17 +1,13 @@
-import HomePage from "@/components/home/HomePage";
-import { APP_TITLE } from "@/lib/app-config";
+import { redirect } from "react-router";
 
-const SEO_TITLE = `${APP_TITLE} - Open Source AI app starter with actions`;
+const SEO_TITLE = "Lapse — Never pay for something you forgot you had.";
 const SEO_DESCRIPTION =
-  "Open Source starter for agent-native apps with durable chat, shared actions, UI state, tools, and a backend your agent can extend.";
+  "Lapse finds subscriptions and free trials about to charge you and drafts the cancellation for you to send.";
 
 export function meta() {
   return [
     { title: SEO_TITLE },
-    {
-      name: "description",
-      content: SEO_DESCRIPTION,
-    },
+    { name: "description", content: SEO_DESCRIPTION },
     { property: "og:title", content: SEO_TITLE },
     { property: "og:description", content: SEO_DESCRIPTION },
     { name: "twitter:card", content: "summary" },
@@ -20,6 +16,10 @@ export function meta() {
   ];
 }
 
+export function clientLoader() {
+  return redirect("/ledger");
+}
+
 export default function HomeRoute() {
-  return <HomePage />;
+  return null;
 }

@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { TAB_ID } from "@/lib/tab-id";
 
 import { DetailSheet } from "./DetailSheet";
+import { Guide, type GuideStep } from "./Guide";
 import {
   CADENCE_SHORT,
   dueLabel,
@@ -30,6 +31,24 @@ import { ImportSheet } from "./ImportSheet";
 import { useTicker } from "./useTicker";
 
 const FLASH_MS = 5200;
+const AUDITED_KEY = "lapse:audited";
+const GUIDE_HIDDEN_KEY = "lapse:guide-hidden";
+
+function useStoredFlag(key: string): [boolean, () => void] {
+  const [on, setOn] = useState(false);
+  useEffect(() => {
+    try {
+      setOn(localStorage.getItem(key) === "1");
+    } catch {}
+  }, [key]);
+  const set = () => {
+    setOn(true);
+    try {
+      localStorage.setItem(key, "1");
+    } catch {}
+  };
+  return [on, set];
+}
 const TEAR_MS = 750;
 
 function useAgentFlashes(rows: Sub[], ready: boolean, localEdits: React.MutableRefObject<Map<string, number>>) {
@@ -233,6 +252,32 @@ export function LedgerPage() {
   const dueWeek = active.filter((r) => matchesFilter(r, "week") && r.status !== "cancel" && r.status !== "cancel_drafted");
   const isSample = rows.some((r) => r.source === "sample");
   const open = rows.find((r) => r.id === openId) ?? null;
+  const hasRows = rows.length > 0;
+
+  const [audited, markAudited] = useStoredFlag(AUDITED_KEY);
+  const [guideHidden, hideGuide] = useStoredFlag(GUIDE_HIDDEN_KEY);
+  const agentTouched = rows.some((r) => r.status === "cancel_drafted");
+  const step: GuideStep = !hasRows ? 1 : cancelled.length > 0 ? 4 : audited || agentTouched ? 3 : 2;
+
+  const startSample = () => {
+    localEdits.current.set("*", Date.now());
+    loadSample.mutate({} as any);
+  };
+
+  const demoStarted = useRef(false);
+  useEffect(() => {
+    if (params.get("demo") !== "1" || data === undefined || demoStarted.current) return;
+    demoStarted.current = true;
+    if (rows.length === 0) startSample();
+    setParams(
+      (p) => {
+        p.delete("demo");
+        return p;
+      },
+      { replace: true },
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, params]);
 
   const setFilter = (f: FilterId) =>
     setParams((p) => {
@@ -263,13 +308,15 @@ export function LedgerPage() {
     URL.revokeObjectURL(url);
   };
 
-  const askAgent = () =>
+  const askAgent = () => {
+    markAudited();
     sendToAgentChat({
       message: selected.length
         ? `Look at these ${selected.length} selected subscriptions and tell me which to keep or cancel.`
         : "Audit my renewal table: walk me through anything that needs my input, one question at a time.",
       submit: true,
     });
+  };
 
   const today = new Date().toLocaleDateString("en-GB", { weekday: "short", day: "2-digit", month: "short", year: "numeric" }).toUpperCase();
 
@@ -282,12 +329,15 @@ export function LedgerPage() {
             <h1 className="lx-serif">Lapse</h1>
           </div>
           <p className="lx-serif lx-tagline">Never pay for something you forgot you had.</p>
+          {hasRows && (
           <div className="lx-mono lx-meta">
             <span>{today}</span>
             <span>
               {active.length} RECURRING · {cancelled.length} SAVED
             </span>
           </div>
+          )}
+          {hasRows && (
           <div className="lx-due">
             <span className="lx-mono lx-due__label">DUE IN 7 DAYS</span>
             <div className="lx-due__figs">
@@ -302,20 +352,37 @@ export function LedgerPage() {
               )}
             </div>
           </div>
+          )}
+          {hasRows && (
           <div className="lx-actions">
             <button type="button" className="lx-btn lx-btn--ink" onClick={() => setImportOpen(true)}>
               Import
             </button>
-            <button type="button" className="lx-btn" onClick={exportIcs} disabled={!rows.length}>
+            <button type="button" className="lx-btn" onClick={exportIcs}>
               <IconCalendarDown size={15} stroke={1.7} /> .ics
             </button>
+            {!(step === 2 && !guideHidden) && (
             <button type="button" className="lx-btn lx-btn--ember" onClick={askAgent}>
               <IconSparkles size={15} stroke={1.7} />
               {selected.length ? `Ask Lapse about ${selected.length}` : "Audit with Lapse"}
             </button>
+            )}
           </div>
+          )}
         </header>
 
+        {!isLoading && (!hasRows || !guideHidden) && (
+          <Guide
+            step={step}
+            busy={loadSample.isPending}
+            onSample={startSample}
+            onImport={() => setImportOpen(true)}
+            onAudit={askAgent}
+            onHide={hasRows ? hideGuide : undefined}
+          />
+        )}
+
+        {hasRows && (
         <nav className="lx-filters" aria-label="Filters">
           {FILTERS.map((f) => (
             <button
@@ -329,41 +396,20 @@ export function LedgerPage() {
             </button>
           ))}
         </nav>
+        )}
 
         {isSample && <p className="lx-mono lx-sample">Sample data – illustrative amounts</p>}
 
+        {hasRows && (
         <div className="lx-table" role="table" aria-label="Renewals">
           <div className="lx-row lx-row--head" role="row">
             <span role="columnheader" />
             <span role="columnheader">Merchant</span>
             <span role="columnheader">Next charge</span>
             <span role="columnheader" className="lx-num">Amount</span>
-            <span role="columnheader" className="lx-num">Conf.</span>
             <span role="columnheader">Stamp</span>
           </div>
-          {isLoading && <p className="lx-mono lx-empty">Printing receipt…</p>}
-          {!isLoading && rows.length === 0 && (
-            <div className="lx-empty">
-              <p className="lx-serif">No receipts yet.</p>
-              <p className="lx-mono lx-dim">Paste a statement, upload a CSV, or try the sample.</p>
-              <div className="lx-actions">
-                <button type="button" className="lx-btn lx-btn--ink" onClick={() => setImportOpen(true)}>
-                  Import
-                </button>
-                <button
-                  type="button"
-                  className="lx-btn"
-                  onClick={() => {
-                    localEdits.current.set("*", Date.now());
-                    loadSample.mutate({} as any);
-                  }}
-                >
-                  Load sample data
-                </button>
-              </div>
-            </div>
-          )}
-          {!isLoading && rows.length > 0 && visible.length === 0 && (
+          {rows.length > 0 && visible.length === 0 && (
             <p className="lx-mono lx-empty lx-dim">Nothing under this filter.</p>
           )}
           {visible.map((r) => {
@@ -392,6 +438,7 @@ export function LedgerPage() {
                   <span className="lx-merchant__name">
                     {r.merchant}
                     {r.kind === "trial" && <span className="lx-trial">TRIAL</span>}
+                    {r.status === "cancel_drafted" && <span className="lx-kitbadge">KIT DRAFTED</span>}
                     {flashing && (
                       <span className="lx-pen">
                         <IconPencil size={11} stroke={2} /> Lapse edited
@@ -410,23 +457,22 @@ export function LedgerPage() {
                   {money(r.amountMinor, r.currency)}
                   <span className="lx-dim">{CADENCE_SHORT[r.cadence]}</span>
                 </span>
-                <span role="cell" className={`lx-num lx-mono lx-conf${r.confidence < 60 ? " is-low" : ""}`}>
-                  {r.confidence}
-                </span>
                 <span role="cell">
                   <Stamps row={r} onStamp={(s) => stamp(r, s)} />
                 </span>
-                {(r.status === "cancel" || r.status === "cancel_drafted") && (
+                {r.status === "cancel" && (
                   <span className="lx-void-mark" aria-hidden>
-                    {r.status === "cancel_drafted" ? "KIT DRAFTED" : "VOID"}
+                    VOID
                   </span>
                 )}
               </div>
             );
           })}
         </div>
+        )}
+        {isLoading && <p className="lx-mono lx-empty">Printing receipt…</p>}
 
-        <SavedStub cancelled={cancelled} />
+        {hasRows && <SavedStub cancelled={cancelled} />}
 
         <footer className="lx-mono lx-foot">
           Lapse never sends or cancels anything for you. Sample data is illustrative.
