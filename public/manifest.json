@@ -2,7 +2,7 @@
   "name": "Lapse",
   "short_name": "Lapse",
   "description": "Never pay for something you forgot you had.",
-  "start_url": "./ledger",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#0F0D17",
   "theme_color": "#0F0D17",
