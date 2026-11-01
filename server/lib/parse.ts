@@ -20,6 +20,7 @@ export interface EmailFinding {
   date: string | null;
   kind: "trial" | "subscription";
   cadence: Cadence;
+  lastChargeDate?: string | null;
   raw: string;
 }
 
@@ -140,13 +141,14 @@ const SYMBOLS: Record<string, string> = {
   KSh: "KES",
   Ksh: "KES",
   "₦": "NGN",
+  N: "NGN",
   "£": "GBP",
   "€": "EUR",
   "₹": "INR",
   $: "USD",
   R: "ZAR",
 };
-const SYM_RE = "R\\$|KSh|Ksh|₦|£|€|₹|\\$|R";
+const SYM_RE = "R\\$|KSh|Ksh|₦|N(?=\\d)|£|€|₹|\\$|R";
 const ISO_RE = ISO_CODES.join("|");
 const NUM_RE = "\\d{1,3}(?:,\\d{3})+(?:\\.\\d{1,2})?|\\d+,\\d{2}(?!\\d)|\\d+(?:\\.\\d{1,2})?";
 const AMOUNT_RE = new RegExp(
@@ -294,60 +296,211 @@ export function parseCsv(text: string): ParseResult {
 
 // ---------- emails ----------
 
+const EMAIL_SEP = /\n\s*(?:-{3,}|={3,}|_{3,})\s*\n/;
+const NAME = String.raw`([A-Z0-9][\w&.'+-]*(?:[ \t]+[A-Z0-9][\w&.'+-]*){0,3})`;
+const lead = (phrases: string[]) => phrases.map((ph) => `[${ph[0]!.toUpperCase()}${ph[0]}]${ph.slice(1)}`).join("|");
+const STRONG_RES = [
+  new RegExp(
+    `(?:${lead(["free trial of", "trial of", "trial for", "subscription to", "subscribed to", "subscribing to", "subscription for", "plan for", "membership to", "membership of", "membership for", "welcome to", "renewal of"])})\\s+${NAME}`,
+  ),
+  new RegExp(`\\b[Yy]our\\s+${NAME}\\s+(?:subscription|membership|plan|trial|account renewal)\\b`),
+];
+const WEAK_RES = [
+  new RegExp(`(?:${lead(["receipt from", "invoice from", "payment to", "order from"])})\\s+${NAME}`),
+  new RegExp(`\\b[Yy]our\\s+${NAME}\\s+(?:receipt|invoice)\\b`),
+];
+const NAME_STOP = /^(?:the|your|our|this|a|an|premium|plus|pro|free|monthly|annual|yearly|basic|standard|family|individual|you)$/i;
+const GENERIC_SENDER = /^(?:no-?reply|do-?not-?reply|billing|support|team|info|hello|notifications?|accounts?|payments?|receipts?|service|mailer|news)$/i;
+const GENERIC_DOMAIN_PART = /^(?:e|em|m|mail|email|emails|mailer|news|info|billing|accounts?|notifications?|no-?reply|send|mg|go|www|com|net|org|io|app|co|ng|uk|us|de|fr|ai|tv)$/i;
+const SUB_SIGNAL =
+  /subscri|\btrial\b|renew|membership|recurring|billing (?:date|period|cycle)|next (?:payment|bill|charge)|auto-?pay|per (?:month|year|week)|\/\s?(?:mo|month|yr|year)\b|monthly|yearly|annual|\bplan\b/i;
+const DATE_ANCHOR =
+  /(?:trial\s+ends?|ends?|ending|renews?|renewing|renewal(?:\s+date)?|charged|billed|billing\s+date|next\s+(?:payment|billing|charge|bill)(?:\s+date)?|expires?|due)\b\s*(?:on|date|is)?\s*:?\s*([\s\S]{0,40})/gi;
+const AMOUNT_ANCHOR = /total|amount|charged?|price|billed|renews?\b[^\n]{0,40}?\bfor|you(?:'ll| will) pay/gi;
+
+function canonical(name: string): string {
+  const cleaned = name.replace(/[.,:;!]+$/, "").trim();
+  return matchAlias(cleaned)?.merchant ?? cleaned;
+}
+
+function firstName(res: RegExp[], text: string): string | null {
+  for (const re of res) {
+    const m = re.exec(text);
+    if (!m) continue;
+    const words = m[1]!.replace(/[.,:;!]+$/, "").trim().split(/\s+/);
+    while (words.length && NAME_STOP.test(words[0]!)) words.shift();
+    if (words.length && !words.every((w) => NAME_STOP.test(w))) return canonical(words.join(" "));
+  }
+  return null;
+}
+
+function senderName(raw: string): string | null {
+  const m = /^(?:from|de|von)\s*:\s*"?([^"<\n]*?)"?\s*<?([\w.+-]+@[\w.-]+)?>?\s*$/im.exec(raw);
+  if (!m) return null;
+  const display = (m[1] ?? "").trim();
+  if (display && !display.includes("@") && !GENERIC_SENDER.test(display)) return canonical(display);
+  const addr = m[2] ?? (display.includes("@") ? display : "");
+  const domain = addr.split("@")[1];
+  if (!domain) return null;
+  const parts = domain.toLowerCase().split(".").filter((x) => !GENERIC_DOMAIN_PART.test(x) && x !== "example");
+  const label = parts[parts.length - 1];
+  return label ? canonical(titleCase(label)) : null;
+}
+
+/** A known merchant named as a whole word in free text ("Notion" yes, "promotion" no). */
+function aliasInText(text: string): string | null {
+  for (const [re, merchant] of ALIASES) {
+    for (const m of text.matchAll(new RegExp(re.source, re.flags.includes("g") ? re.flags : `${re.flags}g`))) {
+      const i = m.index ?? 0;
+      if (!/[A-Za-z]/.test(text[i - 1] ?? "") && !/[A-Za-z]/.test(text[i + m[0].length] ?? "")) return merchant;
+    }
+  }
+  return null;
+}
+
+function merchantOf(raw: string): string | null {
+  return firstName(STRONG_RES, raw) ?? aliasInText(raw) ?? senderName(raw) ?? firstName(WEAK_RES, raw);
+}
+
+function paragraphs(text: string): string[] {
+  return text.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
+}
+
+/** Several emails pasted back to back without separators: start a new email whenever the merchant changes. */
+function groupByMerchant(paras: string[]): string[] {
+  const groups: Array<{ merchant: string | null; text: string[] }> = [];
+  for (const para of paras) {
+    const m = firstName(STRONG_RES, para) ?? aliasInText(para);
+    const cur = groups[groups.length - 1];
+    if (!cur || (m && cur.merchant && m !== cur.merchant)) groups.push({ merchant: m, text: [para] });
+    else {
+      cur.text.push(para);
+      cur.merchant ??= m;
+    }
+  }
+  return groups.map((g) => g.text.join("\n\n"));
+}
+
+/** Split pasted text into emails: explicit --- separators, then "From:" headers, then merchant changes. */
 export function splitEmails(text: string): string[] {
-  let parts = text.split(/\n\s*(?:-{3,}|={3,})\s*\n/);
-  if (parts.length === 1) parts = text.split(/\n\s*\n/);
+  const norm = text.replace(/\r\n?/g, "\n");
+  let parts = norm.split(EMAIL_SEP);
+  if (parts.length === 1) {
+    const starts = [...norm.matchAll(/^(?:from|de|von)\s*:/gim)].map((m) => m.index ?? 0);
+    if (starts.length > 1) parts = starts.map((st, k) => norm.slice(k === 0 ? 0 : st, starts[k + 1] ?? norm.length));
+    else if (starts.length === 0) parts = groupByMerchant(paragraphs(norm));
+  }
   return parts.map((p) => p.trim()).filter(Boolean);
 }
 
-const MERCHANT_RES = [
-  /(?:free trial of|trial of|trial for|subscription to|subscription for|plan for|membership (?:to|of|for))\s+([A-Z0-9][\w&.'+-]*(?:\s+[A-Z0-9][\w&.'+-]*){0,3})/,
-  /^from:\s*"?([^"<\n]+?)"?\s*</im,
-];
-
 function cadenceFromText(text: string): Cadence {
-  if (/\/\s?(?:year|yr|annum)\b|per year|a year|annual|yearly/i.test(text)) return "yearly";
-  if (/\/\s?(?:quarter)\b|per quarter|quarterly/i.test(text)) return "quarterly";
-  if (/\/\s?(?:month|mo)\b|per month|a month|monthly/i.test(text)) return "monthly";
+  if (/\/\s?(?:year|yr|annum)\b|per year|a year|annual|yearly|12 months/i.test(text)) return "yearly";
+  if (/\/\s?(?:quarter)\b|per quarter|quarterly|3 months/i.test(text)) return "quarterly";
+  if (/\/\s?(?:month|mo)\b|per month|a month|monthly|every month/i.test(text)) return "monthly";
   if (/\/\s?(?:week|wk)\b|per week|a week|weekly/i.test(text)) return "weekly";
   return "unknown";
 }
 
-/** Extract merchant, amount and the "trial ends / renews / will be charged on" date from emails. */
-export function parseEmails(text: string, today = todayIso()): EmailFinding[] {
-  const out: EmailFinding[] = [];
+/** A date with a year, or "4 Dec" / "Dec 4" resolved to its next occurrence on or after today. */
+function looseDate(text: string, today: string): string | null {
+  const full = parseDate(text);
+  if (full) return full;
+  const m =
+    new RegExp(`\\b(\\d{1,2})(?:st|nd|rd|th)?\\s+${MON_RE}(?![a-z])`, "i").exec(text) ??
+    new RegExp(`\\b${MON_RE}\\s+(\\d{1,2})(?:st|nd|rd|th)?\\b`, "i").exec(text);
+  if (!m) return null;
+  const [dayStr, monStr] = /^\d/.test(m[1]!) ? [m[1]!, m[2]!] : [m[2]!, m[1]!];
+  const year = Number(today.slice(0, 4));
+  const iso = isoDate(year, monthNum(monStr), Number(dayStr));
+  if (!iso) return null;
+  return iso < today ? isoDate(year + 1, monthNum(monStr), Number(dayStr)) : iso;
+}
+
+function emailDate(raw: string, today: string): string | null {
+  for (const a of raw.matchAll(DATE_ANCHOR)) {
+    const d = looseDate(a[1]!, today);
+    if (d) return d;
+  }
+  const inDays = /\bin\s+(\d{1,3})\s+days?\b/i.exec(raw);
+  if (inDays) return addDays(today, Number(inDays[1]));
+  return parseDate(raw);
+}
+
+function emailAmount(raw: string): AmountMatch | null {
+  const all = findAmounts(raw).filter((a) => a.currency && a.amountMinor > 0);
+  for (const k of raw.matchAll(AMOUNT_ANCHOR)) {
+    const end = (k.index ?? 0) + k[0].length;
+    const near = all.find((a) => a.index >= end && a.index - end <= 60);
+    if (near) return near;
+  }
+  return all[0] ?? null;
+}
+
+function preview(raw: string): string {
+  const line = raw.split("\n").map((l) => l.trim()).find((l) => l && !/^(?:from|to|date|sent|cc)\s*:/i.test(l)) ?? raw;
+  const t = line.replace(/^subject\s*:\s*/i, "");
+  return t.length > 48 ? `${t.slice(0, 47)}…` : t;
+}
+
+export interface EmailParse {
+  findings: EmailFinding[];
+  skipped: string[];
+}
+
+/** Extract merchant, amount, cadence and the next charge / trial-end date from pasted emails. */
+export function parseEmailsDetailed(text: string, today = todayIso()): EmailParse {
+  const byKey = new Map<string, EmailFinding>();
+  const skipped: string[] = [];
   for (const raw of splitEmails(text)) {
-    let merchant: string | null = null;
-    for (const re of MERCHANT_RES) {
-      const m = re.exec(raw);
-      if (m) {
-        merchant = m[1]!.replace(/[.,]+$/, "").trim();
-        break;
-      }
+    if (!SUB_SIGNAL.test(raw)) {
+      skipped.push(`"${preview(raw)}": no subscription, renewal or trial wording`);
+      continue;
     }
-    if (!merchant) continue;
-    const known = matchAlias(merchant);
-    if (known) merchant = known.merchant;
-
-    let date: string | null = null;
-    const anchor = /(?:ends?|ending|renews?|renewing|charged|billed|expires?)\s+(?:on\s+)?(.{0,40})/i.exec(raw);
-    if (anchor) date = parseDate(anchor[1]!);
-    const inDays = /\bin\s+(\d{1,3})\s+days?\b/i.exec(raw);
-    if (!date && inDays) date = addDays(today, Number(inDays[1]));
-    if (!date) date = parseDate(raw);
-
-    const amount = findAmounts(raw).find((a) => a.currency) ?? null;
-    out.push({
+    const merchant = merchantOf(raw);
+    if (!merchant) {
+      skipped.push(`"${preview(raw)}": couldn't tell which service it's from (include the From: line)`);
+      continue;
+    }
+    const kind = /\btrial\b/i.test(raw) ? "trial" : "subscription";
+    const cadence = cadenceFromText(raw);
+    let date = emailDate(raw, today);
+    let lastChargeDate: string | null = null;
+    if (date && date < today && kind === "subscription") {
+      lastChargeDate = date;
+      let next: string | null = cadence === "unknown" ? null : date;
+      for (let n = 0; next && next < today && n < 600; n++) next = addCadence(next, cadence);
+      date = next;
+    }
+    const amount = emailAmount(raw);
+    const finding: EmailFinding = {
       merchant,
       amountMinor: amount?.amountMinor ?? null,
       currency: amount?.currency ?? null,
       date,
-      kind: /\btrial\b/i.test(raw) ? "trial" : "subscription",
-      cadence: cadenceFromText(raw),
+      kind,
+      cadence,
+      lastChargeDate,
       raw,
-    });
+    };
+    const key = `${slug(merchant)}:${finding.currency ?? ""}`;
+    const prev = byKey.get(key);
+    if (!prev) byKey.set(key, finding);
+    else {
+      const newer = (finding.date ?? "") >= (prev.date ?? "") ? finding : prev;
+      const older = newer === finding ? prev : finding;
+      byKey.set(key, {
+        ...newer,
+        amountMinor: newer.amountMinor ?? older.amountMinor,
+        cadence: newer.cadence === "unknown" ? older.cadence : newer.cadence,
+        lastChargeDate: newer.lastChargeDate ?? older.lastChargeDate ?? null,
+      });
+    }
   }
-  return out;
+  return { findings: [...byKey.values()], skipped };
+}
+
+export function parseEmails(text: string, today = todayIso()): EmailFinding[] {
+  return parseEmailsDetailed(text, today).findings;
 }
 
 // ---------- merchants ----------
@@ -369,6 +522,38 @@ const ALIASES: Array<[RegExp, string, string]> = [
   [/DROPBOX/i, "Dropbox", "cloud"],
   [/GOOGLE\s*\*?\s*(?:ONE|STORAGE)/i, "Google One", "cloud"],
   [/CHATGPT|OPENAI/i, "ChatGPT", "software"],
+  [/\bCLAUDE\b|ANTHROPIC/i, "Claude", "software"],
+  [/MICROSOFT\s*365|OFFICE\s*365|XBOX\s*GAME\s*PASS/i, "Microsoft", "software"],
+  [/LINKEDIN\s*PREMIUM/i, "LinkedIn Premium", "software"],
+  [/APPLE\s*MUSIC/i, "Apple Music", "music"],
+  [/APPLE\s*TV/i, "Apple TV+", "streaming"],
+  [/DEEZER/i, "Deezer", "music"],
+  [/BOOMPLAY/i, "Boomplay", "music"],
+  [/AUDIOMACK/i, "Audiomack", "music"],
+  [/HBO\s*MAX/i, "HBO Max", "streaming"],
+  [/PARAMOUNT\s*\+|PARAMOUNT\s*PLUS/i, "Paramount+", "streaming"],
+  [/CRUNCHYROLL/i, "Crunchyroll", "streaming"],
+  [/DUOLINGO/i, "Duolingo", "education"],
+  [/GRAMMARLY/i, "Grammarly", "software"],
+  [/MIDJOURNEY/i, "Midjourney", "software"],
+  [/GITHUB/i, "GitHub", "software"],
+  [/FIGMA/i, "Figma", "software"],
+  [/ZOOM\.US|\bZOOM\s+(?:PRO|WORKPLACE|ONE)/i, "Zoom", "software"],
+  [/COURSERA/i, "Coursera", "education"],
+  [/SKILLSHARE/i, "Skillshare", "education"],
+  [/HEADSPACE/i, "Headspace", "wellness"],
+  [/\bCALM\b/, "Calm", "wellness"],
+  [/STRAVA/i, "Strava", "fitness"],
+  [/NORDVPN/i, "NordVPN", "software"],
+  [/EXPRESSVPN/i, "ExpressVPN", "software"],
+  [/SURFSHARK/i, "Surfshark", "software"],
+  [/1PASSWORD/i, "1Password", "software"],
+  [/PLAYSTATION\s*PLUS|PS\s*PLUS/i, "PlayStation Plus", "gaming"],
+  [/STARLINK/i, "Starlink", "internet"],
+  [/PATREON/i, "Patreon", "creators"],
+  [/KINDLE\s*UNLIMITED/i, "Kindle Unlimited", "books"],
+  [/TINDER/i, "Tinder", "social"],
+  [/\bX\s+PREMIUM\b|TWITTER\s*BLUE/i, "X Premium", "social"],
 ];
 const PROCESSORS = /^(PAYPAL|PP|SQ|SQUARE|PADDLE|STRIPE|GOOGLE|APPLE|PAYSTACK|FLW|FLUTTERWAVE)$/;
 const CITY_SUFFIX =
@@ -574,14 +759,14 @@ export function emailToCandidate(f: EmailFinding): Candidate {
     currency: f.currency ?? "XXX",
     cadence: f.cadence,
     kind: f.kind,
-    lastChargeDate: null,
+    lastChargeDate: f.lastChargeDate ?? null,
     nextChargeDate: f.date,
     trialEnds: f.kind === "trial" ? f.date : null,
     category: alias?.category ?? "other",
     confidence,
     status: confidence < 60 ? "unsure" : "detected",
     note: notes.join(" "),
-    chargeCount: 0,
+    chargeCount: f.lastChargeDate ? 1 : 0,
   };
 }
 

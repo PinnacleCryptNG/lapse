@@ -18,7 +18,7 @@ import {
   detectRecurring,
   emailToCandidate,
   parseCsv,
-  parseEmails,
+  parseEmailsDetailed,
   parseStatement,
   perYear,
   todayIso,
@@ -54,8 +54,8 @@ export type ImportKind = "statement" | "csv" | "email";
 
 export function parseImport(kind: ImportKind, text: string, today = todayIso()) {
   if (kind === "email") {
-    const emails = parseEmails(text, today);
-    return { charges: [] as Charge[], emails, skipped: [] as string[], rowCount: emails.length };
+    const { findings: emails, skipped } = parseEmailsDetailed(text, today);
+    return { charges: [] as Charge[], emails, skipped, rowCount: emails.length };
   }
   const { charges, skipped } = kind === "csv" ? parseCsv(text) : parseStatement(text);
   return { charges, emails: [], skipped, rowCount: charges.length };

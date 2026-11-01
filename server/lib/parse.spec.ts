@@ -10,6 +10,7 @@ import {
   parseCsv,
   parseDate,
   parseEmails,
+  parseEmailsDetailed,
   parseStatement,
 } from "./parse";
 
@@ -196,5 +197,56 @@ describe("detectRecurring", () => {
 
   it("ignores one-off noise", () => {
     expect(ignored.map((i) => i.merchant).sort()).toEqual(["Jumia", "Shoprite"]);
+  });
+});
+
+describe("parseEmails on real-world copies", () => {
+  const today = "2026-11-01";
+
+  it("reads a Gmail-style copy with no headers and the date on its own line", () => {
+    const [f, ...rest] = parseEmails(
+      "Netflix\n\nYour membership has been renewed\n\nHi Ade,\n\nWe've charged ₦7,000 for your Standard plan.\n\nNext billing date\n3 December 2026\n\nQuestions? Visit the Help Centre.",
+      today,
+    );
+    expect(rest).toHaveLength(0);
+    expect(f).toMatchObject({ merchant: "Netflix", amountMinor: 700000, currency: "NGN", date: "2026-12-03" });
+  });
+
+  it("prefers the service inside an Apple receipt and reads N-prefixed naira", () => {
+    const [f] = parseEmails(
+      "From: Apple <no_reply@email.apple.com>\nSubject: Your receipt from Apple.\n\niCloud+ with 50 GB of Storage (Monthly)\nRenews 2 Dec 2026\nTOTAL N1,500.00",
+      today,
+    );
+    expect(f).toMatchObject({ merchant: "iCloud", amountMinor: 150000, currency: "NGN", date: "2026-12-02", cadence: "monthly" });
+  });
+
+  it("names unknown services from the sender and splits emails on From: lines", () => {
+    const found = parseEmails(
+      "From: Spotify <no-reply@spotify.com>\nSubject: Your Spotify Premium receipt\nThanks for your payment. Premium Individual $11.99/month. Your next payment is on December 6, 2026.\nFrom: Brightwheel Studio <billing@brightwheel.io>\nSubject: Your subscription renews soon\nYour Brightwheel Pro plan renews on 15/12/2026 for £8.00 per month.",
+      today,
+    );
+    expect(found.map((f) => [f.merchant, f.amountMinor, f.currency, f.date])).toEqual([
+      ["Spotify", 1199, "USD", "2026-12-06"],
+      ["Brightwheel Pro", 800, "GBP", "2026-12-15"],
+    ]);
+  });
+
+  it("splits back-to-back emails without separators and rolls past receipts forward", () => {
+    const found = parseEmails(
+      "Your Disney+ subscription\n\nPayment received on 1 Oct 2026. $7.99 monthly.\n\nYour Duolingo Super trial ends in 5 days. You'll be charged $83.99/year.",
+      today,
+    );
+    expect(found).toHaveLength(2);
+    expect(found[0]).toMatchObject({ merchant: "Disney+", lastChargeDate: "2026-10-01", date: "2026-11-01" });
+    expect(found[1]).toMatchObject({ merchant: "Duolingo", kind: "trial", date: "2026-11-06", amountMinor: 8399 });
+  });
+
+  it("explains skipped emails instead of dropping them silently", () => {
+    const r = parseEmailsDetailed(
+      "From: Jumia <news@jumia.com.ng>\nSubject: Flash sale ends tonight\nUp to 50% off phones and a special promotion.",
+      today,
+    );
+    expect(r.findings).toHaveLength(0);
+    expect(r.skipped[0]).toMatch(/no subscription/);
   });
 });

@@ -39,7 +39,21 @@ export function ImportSheet({
         if (!text.trim()) return;
         const imp: any = await importStatement.mutateAsync({ text, kind: tab } as any);
         const det: any = await detect.mutateAsync({ importId: imp.importId } as any);
-        toast.success(`Found ${det.inserted + det.updated} recurring charges.`);
+        const found = det.inserted + det.updated;
+        const skipped: string[] = imp.skippedLines ?? [];
+        const what = tab === "email" ? "subscriptions" : "recurring charges";
+        if (found === 0) {
+          toast.warning(
+            tab === "email"
+              ? `No subscriptions found. ${skipped[0] ?? "Paste the whole email, including the From: line."}`
+              : "No recurring charges found. Each line needs a date, a description and an amount.",
+            { duration: 10000 },
+          );
+          return;
+        }
+        toast.success(`Found ${found} ${what}.${skipped.length && tab === "email" ? ` Skipped ${skipped.length}: ${skipped[0]}` : ""}`, {
+          duration: skipped.length ? 9000 : 4000,
+        });
         setText("");
         setFileName(null);
       }
@@ -92,7 +106,7 @@ export function ImportSheet({
             onChange={(e) => setText(e.target.value)}
             placeholder={
               tab === "email"
-                ? "Paste billing / trial emails…"
+                ? "Paste one or more billing, renewal or free-trial emails. Separate them with --- if you can."
                 : tab === "csv"
                   ? ""
                   : "03/10/2026  NFLX*DIGITAL LAGOS  NGN 7,000.00"
