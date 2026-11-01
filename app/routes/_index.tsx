@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { Avatar } from "@/components/lapse/Avatar";
 import { LapseLogo, LapseMark } from "@/components/lapse/Logo";
 import { useTicker } from "@/components/lapse/useTicker";
-import { startDemo } from "@/lib/demo";
+import { leaveDemoAndSignIn, startDemo, whoIsVisiting, type Visitor } from "@/lib/demo";
 
 const SITE = "https://lapse-agent.vercel.app";
 const TITLE = "Lapse · Never pay for something you forgot you had";
@@ -174,6 +174,34 @@ const FEATURES = [
 
 const HEAD = "Never pay for something you forgot you had.".split(" ");
 
+function NavLink() {
+  const [who, setWho] = useState<Visitor>("guest");
+  useEffect(() => {
+    void whoIsVisiting().then(setWho);
+  }, []);
+  if (who === "member") {
+    return (
+      <a className="ld-link" href={appPath("/ledger")}>
+        Open my list
+      </a>
+    );
+  }
+  return (
+    <a
+      className="ld-link"
+      href={appPath("/ledger")}
+      onClick={(e) => {
+        e.preventDefault();
+        void whoIsVisiting().then((now) =>
+          now === "demo" ? leaveDemoAndSignIn() : window.location.assign(appPath("/ledger")),
+        );
+      }}
+    >
+      Sign in
+    </a>
+  );
+}
+
 export default function Landing() {
   const ref = useReveal();
   return (
@@ -181,9 +209,7 @@ export default function Landing() {
       <div className="ld-glow" aria-hidden />
       <header className="ld-nav">
         <LapseLogo size={17} />
-        <a className="ld-link" href={appPath("/ledger")}>
-          Sign in
-        </a>
+        <NavLink />
       </header>
       <main>
         <section className="ld-hero">
