@@ -1,33 +1,29 @@
-# Chat — Agent Guide
+# Lapse — Agent Guide
 
-Chat is the minimal chat-first agent-native app. `/` redirects to shared sign-in, then `/home`, the editable Get started page. Chat lives at `/chat`; new chats start there. Actions carry capabilities; screens exist only for durable workflows.
+Lapse finds subscriptions and free trials that are about to charge the user and helps them cancel. The user and the agent work on ONE shared, live renewal table at `/home` ("Receipt Ledger"). Tagline: "Never pay for something you forgot you had."
 
-## Skills
+## Lapse agent rules (runtime)
 
-Search with `rg --hidden --follow`; read the exact linked guide before deeper work. `.agents/skills/build-an-app/SKILL.md` — start here for vague requests to create a domain app. `.agents/skills/adding-a-feature/SKILL.md` — cross-area feature checklist. Data/integrations: `.agents/skills/actions/SKILL.md`, `.agents/skills/storing-data/SKILL.md`, `.agents/skills/security/SKILL.md`, `.agents/skills/secrets/SKILL.md`, `.agents/skills/sharing/SKILL.md`. UI: `.agents/skills/frontend-design/SKILL.md`, `.agents/skills/shadcn-ui/SKILL.md`, `.agents/skills/client-side-routing/SKILL.md`. Agent context/workflows: `.agents/skills/context-awareness/SKILL.md`, `.agents/skills/real-time-sync/SKILL.md`, `.agents/skills/reliable-mutations/SKILL.md`, `.agents/skills/performance/SKILL.md`, `.agents/skills/delegate-to-agent/SKILL.md`. Framework: `.agents/skills/agent-native-docs/SKILL.md`, `.agents/skills/agent-native-toolkit/SKILL.md`, `.agents/skills/customizing-agent-native/SKILL.md`.
+- You are Lapse, a careful subscription auditor. Work only through actions. Never guess amounts.
+- If confidence < 60 set status `unsure` and put a one-line question in `note`, then ask the user in chat.
+- Never send, submit, or contact any service. To cancel: write clear steps (service account/billing page, or App Store: Settings → your name → Subscriptions; Google Play: Play Store → profile → Payments & subscriptions → Subscriptions) and a short polite message in the user's chosen language, then call `draft-cancellation`. Always tell the user to verify steps on the service's own site and send it themselves.
+- Never change a row where `decided_by = user`. Suggest instead.
+- When the user says "this" or "these", call `view-screen` to read the selection.
+- Draft languages: English, French, Portuguese, Spanish, Hausa, Yoruba, Nigerian Pidgin.
+- Full playbook: `.agents/skills/lapse/SKILL.md`.
 
-Use local docs only (no web research): `pnpm action docs-search --query "<topic>"`, `pnpm action docs-search --slug "<slug>"`, `pnpm action docs-search --list`, `pnpm action source-search --query "<pattern>"`, `pnpm action source-search --path <path>`, or `pnpm action source-search --list`. For external-agent integrations, read `pnpm action docs-search --slug "external-agents"`.
+## Lapse code map
 
-## Core rules
+- `server/db/schema.ts` — `subscriptions`, `cancel_kits`, `imports`; migrations in `server/plugins/db.ts` (`lapse_migrations`).
+- `server/lib/parse.ts` — deterministic statement/CSV/email parsers and recurring detection (no LLM). `server/lib/store.ts` — owner-scoped persistence. `server/sample-data.ts` — fictional, relative-date sample.
+- `actions/` — every capability (import-statement, detect-recurring, list-subscriptions, upcoming-renewals, update-subscription, mark-status, draft-cancellation, get-cancel-kit, savings-summary, load-sample-data, export-ics, view-screen).
+- `app/routes/home.tsx` + `app/components/ledger/` — Receipt Ledger UI; all data through `useActionQuery` / `useActionMutation`.
 
-- UI feedback: target 100 ms, never exceed 400 ms; acknowledge before network work.
-- Normal app data must flow through actions. Keep actions deterministic and focused; use agent chat/AgentSidebar for AI work and follow-ups in the same thread. Keep structured state in SQL and large files in configured storage; persist references only.
-- For external integrations, inspect the workspace/provider connection catalog first; reuse its scoped resolver. Never hardcode credentials, webhook URLs, or private/customer data.
-- Never fabricate. Report failures and recover; verify writes by reading the row or screen. Navigation is in `<current-screen>`; use `view-screen` for fresh visible-record details.
+## Template guide (Chat)
 
-For custom branding, keep `server/plugins/agent-native-email-branding.ts` aligned: `app.name` appears in transactional email and optional `app.logoUrl` must be an absolute HTTPS URL.
+Chat lives at `/chat`; the Receipt Ledger is the app home at `/ledger` (`app.homePath`). Search with `rg --hidden --follow`. Key skills: `.agents/skills/actions`, `storing-data`, `real-time-sync`, `context-awareness`, `adding-a-feature`, `frontend-design`, `security`. Local docs only: `pnpm action docs-search --query "<topic>"` / `--slug "<slug>"`; source: `pnpm action source-search --query "<pattern>"`.
 
-## Application state
-
-- `navigation` describes the view and selected ids. Chat is `chat` at `/chat` and `/chat/<threadId>`; the Get started page is `home` at `/home`; `/` opens shared sign-in/signup.
-- Use `navigate` when supported and `view-screen` for a fresh read of visible details; basic navigation is already in `<current-screen>`.
-
-## Building a domain app
-
-Choose the primary workflow and route before editing. Add a domain route under `app/routes/` and set `app.homePath` in `server/plugins/agent-native-email-branding.ts` with `defineAppConfig`. The default Get started page lives at `/home`, and Chat stays at `/chat`; edit `app/routes/home.tsx` when replacing that page with a domain-specific home. Add a static link in `app/components/layout/Sidebar.tsx` before `ChatThreadsSection`; `Header.tsx` uses `APP_TITLE` elsewhere. Shared sidebar and AgentInspector remain.
-
-Use `adding-a-feature` for functional parity and `frontend-design` for a user-facing screen. Keep feature guidance here; do not rewrite `README.md` or `DESIGN.md`. After all edits, run one typecheck, one doctor check, and one browser smoke of the primary workflow, including overlap rejection, cancellation freeing the slot, and authenticated landing. Skip production build and extra test suites.
-
-Before building common workspace or agent UI, read `agent-native-toolkit`; for supported customization, read `customizing-agent-native`.
-
+- Normal app data flows through actions; keep them deterministic. Never fabricate; verify writes by reading the row or screen.
+- `navigation` describes the view (`ledger`, `chat`, `home`) and path; use `view-screen` for selection, open row and filters, `navigate` to move the user.
+- UI feedback target 100 ms; acknowledge before network work.
 - Guarded verification: run `pnpm agent-native:doctor`; fix findings before done.
