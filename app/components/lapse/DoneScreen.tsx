@@ -1,5 +1,6 @@
 import { sendToAgentChat } from "@agent-native/core/client/agent-chat";
 import { useActionQuery } from "@agent-native/core/client/hooks";
+import { ConvertedTotal } from "./ConvertedTotal";
 import { IconCheck, IconChevronDown, IconCopy, IconMail, IconSparkles } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -159,11 +160,6 @@ export function DoneScreen({
   onAsk: (message: string) => void;
 }) {
   const yearly = yearlyTotals(cancelling);
-  const [main, ...others] = [...yearly].sort(
-    (a, b) =>
-      cancelling.filter((r) => r.currency === b.currency).length - cancelling.filter((r) => r.currency === a.currency).length ||
-      Number(b.currency === "NGN") - Number(a.currency === "NGN"),
-  );
   const doneCount = cancelling.filter((r) => r.status === "cancelled").length;
   const ordered = [...cancelling].sort(
     (a, b) => Number(a.status === "cancelled") - Number(b.status === "cancelled") || (a.daysLeft ?? 9999) - (b.daysLeft ?? 9999),
@@ -174,12 +170,7 @@ export function DoneScreen({
       {cancelling.length ? (
         <div className="lp-save">
           <span className="lp-save__lead">You&apos;ll save each year</span>
-          {main && <Figure currency={main.currency} minor={main.amountMinor} />}
-          {others.map((t) => (
-            <span key={t.currency} className="lp-save__extra">
-              + {money(t.amountMinor, t.currency)} a year in {t.currency}
-            </span>
-          ))}
+          <ConvertedTotal totals={yearly} Figure={Figure} />
           <span className="lp-save__sub">
             {doneCount === cancelling.length
               ? "All cancelled. Nice."

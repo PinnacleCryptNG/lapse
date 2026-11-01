@@ -313,3 +313,7 @@
 .ld-glow { -webkit-mask-image: linear-gradient(#000 55%, transparent); mask-image: linear-gradient(#000 55%, transparent); }
 .ld-btn--primary { animation: none; box-shadow: 0 10px 30px rgba(255,210,63,.25); }
 .ld-btn--primary:hover { box-shadow: 0 14px 36px rgba(255,210,63,.35); }
+.lp-conv__fig { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 6px 0 4px; }
+.lp-conv__fig .lp-save__fig { margin: 0; }
+.lp-conv__approx { font: 600 30px/1 var(--sans); color: var(--faint); }
+.lp-conv__pick { margin-left: auto; height: 32px; padding: 0 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg-2); color: var(--text); font: 500 13px var(--mono); }

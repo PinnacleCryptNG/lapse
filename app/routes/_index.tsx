@@ -58,14 +58,14 @@ function DemoButton({ label = "Try the demo" }: { label?: string }) {
 }
 
 const DECK = [
-  { name: "FocusFlow Pro", amt: 45000, per: "/year", yearly: 45000, due: "Turns paid in 3 days", chip: "Free trial", verdict: "cancel" },
-  { name: "Netflix", amt: 7000, per: "/month", yearly: 0, due: "Charges in 2 days", chip: "Monthly", verdict: "keep" },
-  { name: "iCloud+", amt: 1500, per: "/month", yearly: 18000, due: "Charges tomorrow", chip: "Monthly", verdict: "cancel" },
-  { name: "Canva Pro", amt: 11000, per: "/month", yearly: 132000, due: "Price went up 16%", chip: "Price rise", verdict: "cancel" },
-  { name: "Spotify", amt: 1900, per: "/month", yearly: 0, due: "Charges in 5 days", chip: "Monthly", verdict: "keep" },
+  { name: "FocusFlow Pro", amt: 39.99, per: "/year", yearly: 39.99, due: "Turns paid in 3 days", chip: "Free trial", verdict: "cancel" },
+  { name: "Netflix", amt: 15.49, per: "/month", yearly: 0, due: "Charges in 2 days", chip: "Monthly", verdict: "keep" },
+  { name: "iCloud+", amt: 2.99, per: "/month", yearly: 35.88, due: "Charges tomorrow", chip: "Monthly", verdict: "cancel" },
+  { name: "Canva Pro", amt: 15, per: "/month", yearly: 180, due: "Price went up 16%", chip: "Price rise", verdict: "cancel" },
+  { name: "Spotify", amt: 11.99, per: "/month", yearly: 0, due: "Charges in 5 days", chip: "Monthly", verdict: "keep" },
 ] as const;
 const STEP_MS = 2600;
-const naira = (n: number) => `₦${n.toLocaleString("en-US")}`;
+const usd = (n: number) => `$${n.toLocaleString("en-US", { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 })}`;
 
 function Receipt({ c, className, style }: { c: (typeof DECK)[number]; className: string; style?: React.CSSProperties }) {
   return (
@@ -74,7 +74,7 @@ function Receipt({ c, className, style }: { c: (typeof DECK)[number]; className:
       <span className={`ld-r__chip${c.chip === "Free trial" || c.chip === "Price rise" ? " is-hot" : ""}`}>{c.chip}</span>
       <b className="ld-r__name">{c.name}</b>
       <span className="ld-r__amt">
-        {naira(c.amt)}
+        {usd(c.amt)}
         <small>{c.per}</small>
       </span>
       <span className="ld-r__tear" aria-hidden />
@@ -106,7 +106,7 @@ function Deck() {
       <div className="ld-saved">
         <LapseMark size={16} />
         <span>
-          Saved <b>{naira(Math.round(shown))}</b>/yr
+          Saved <b>{usd(Math.round(shown * 100) / 100)}</b>/yr
         </span>
       </div>
       <div className="ld-bubble" key={`q-${i}`}>

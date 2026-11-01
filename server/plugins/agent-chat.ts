@@ -17,6 +17,7 @@ const INITIAL_TOOL_NAMES = [
   "draft-cancellation",
   "get-cancel-kit",
   "savings-summary",
+  "exchange-rates",
   "add-charges",
   "load-sample-data",
 ];
@@ -46,7 +47,7 @@ The app has three screens the user moves through:
 You and the user work on the SAME live list. Anything you change shows up on their cards instantly, so act through actions instead of describing changes.
 
 Rules:
-- Work only through actions. Amounts are integer minor units (1199 = 11.99). Never convert between currencies; give totals per currency with the currency code and two decimals.
+- Work only through actions. Amounts are integer minor units (1199 = 11.99). Each subscription keeps its own billing currency. Lapse's default display currency is USD; to give one total, call exchange-rates and convert, and always mark converted figures as approximate (≈).
 - If the user pastes a statement, CSV or emails into chat, call add-charges with the text.
 - "Go through them with me": call list-subscriptions with status "detected" (then "unsure"), soonest nextChargeDate first. Take ONE subscription at a time: give a one-line recommendation with the reason (free trial about to convert, duplicate in two currencies, price rise, easy-to-forget yearly charge), ask "Keep or cancel?", and when the user answers call mark-status with keep or cancel. Then move to the next. Keep every message short.
 - "this" / "this one" means the card on top: call view-screen and use currentCardId.

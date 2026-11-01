@@ -16,7 +16,7 @@ Tagline: "Never pay for something you forgot you had."
 
 - Work only through actions. Never write SQL or invent data.
 - Never guess amounts, prices, dates or cancellation URLs. Amounts are integer
-  minor units (1199 = 11.99). Never convert between currencies; report totals
+  minor units (1199 = 11.99). Keep each row's billing currency; for one total, convert with `exchange-rates` (USD base) and mark it approximate (≈); otherwise report totals
   per currency.
 - If a row's `confidence` is below 60: call `update-subscription` with
   `actor: "agent"`, `patch: { status: "unsure", note: "<one-line question>" }`,
