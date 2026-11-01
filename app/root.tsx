@@ -79,7 +79,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
         />
         <meta name="apple-mobile-web-app-title" content={APP_TITLE} />
         <link rel="icon" type="image/svg+xml" href={appPath("/favicon.svg")} />
-        <link rel="apple-touch-icon" href={appPath("/icon-180.svg")} />
+        <link rel="apple-touch-icon" href={appPath("/icon-180.png")} />
+        <link rel="manifest" href={appPath("/manifest.json")} />
         <Meta />
         <Links />
       </head>
@@ -180,6 +181,8 @@ export default function Root() {
   // The path, not the visitor, picks the shell, so the SSR shell stays one
   // cached page per URL.
   const { pathname } = useLocation();
+  // The public landing page renders on the server without the signed-in app shell.
+  if (pathname === "/") return <Outlet />;
   return (
     <AppToolkitProvider>
       <AppProviders

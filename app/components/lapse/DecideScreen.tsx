@@ -88,7 +88,7 @@ function TopCard({
         </div>
       </div>
       <p className="lp-card__tip">
-        <span>Lapse says</span>
+        <span>Lapse</span>
         {tipFor(row)}
       </p>
     </article>
@@ -189,7 +189,7 @@ export function DecideScreen({
           </button>
         )}
       </div>
-      <p className="lp-hint">Swipe right to keep, left to cancel. Arrow keys work too.</p>
+      <p className="lp-hint">Swipe or use ← →</p>
     </section>
   );
 }

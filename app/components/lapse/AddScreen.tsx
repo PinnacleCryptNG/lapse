@@ -61,7 +61,7 @@ export function AddScreen({
     <section className="lp-add lp-enter">
       <h1 className="lp-h1">{hasRows ? "Add more charges" : "What's about to charge you?"}</h1>
       <p className="lp-lede">
-        Paste your bank statement or your subscription emails. Lapse finds every subscription and free trial in it.
+        Paste a bank statement or a few subscription emails. Lapse finds every subscription and free trial.
       </p>
       <div className="lp-paste">
         <textarea
@@ -106,7 +106,7 @@ export function AddScreen({
       </button>
       {!hasRows && (
         <button type="button" className="lp-btn lp-btn--ghost lp-btn--block" onClick={onSample} disabled={sampleBusy}>
-          {sampleBusy ? "Loading the sample…" : "No statement handy? Try sample data"}
+          {sampleBusy ? "Loading the sample…" : "Try with sample data"}
         </button>
       )}
     </section>

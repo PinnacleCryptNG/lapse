@@ -16,7 +16,7 @@ Lapse finds subscriptions and free trials that are about to charge the user and 
 
 - `server/db/schema.ts` — `subscriptions`, `cancel_kits`, `imports`; migrations in `server/plugins/db.ts` (`lapse_migrations`).
 - `server/lib/parse.ts` — deterministic statement/CSV/email parsers and recurring detection (no LLM). `server/lib/store.ts` — owner-scoped persistence. `server/sample-data.ts` — fictional, relative-date sample.
-- `actions/` — every capability (add-charges, list-subscriptions, upcoming-renewals, update-subscription, mark-status, draft-cancellation, get-cancel-kit, savings-summary, load-sample-data, export-ics, view-screen).
+- `actions/` — every capability (add-charges, list-subscriptions, upcoming-renewals, update-subscription, mark-status, draft-cancellation, get-cancel-kit, savings-summary, load-sample-data, view-screen).
 - `app/routes/ledger.tsx` + `app/components/lapse/` — the three-screen UI (`?s=add|decide|done`); all data through `useActionQuery` / `useActionMutation`.
 
 ## Template guide (Chat)

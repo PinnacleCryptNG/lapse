@@ -93,7 +93,7 @@ function CancelItem({
             ))}
           </select>
           <button type="button" className="lp-btn lp-btn--dark" onClick={write} disabled={writing}>
-            {writing ? "Lapse is writing…" : "Write my cancel message"}
+            {writing ? "Lapse is writing…" : "Write cancel message"}
           </button>
         </div>
       )}

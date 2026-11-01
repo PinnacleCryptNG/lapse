@@ -11,6 +11,7 @@ import { TAB_ID } from "@/lib/tab-id";
 import { AddScreen } from "./AddScreen";
 import { DecideScreen } from "./DecideScreen";
 import { DoneScreen } from "./DoneScreen";
+import { LapseLogo } from "./Logo";
 import { byUrgency, isCancelling, isKept, isOpen, type Screen, SCREENS, type Status, STATUS_WORD, type Sub } from "./format";
 
 const LOCAL_MS = 6000;
@@ -52,19 +53,10 @@ function useAgentChanges(rows: Sub[], ready: boolean, localEdits: React.MutableR
   return useMemo(() => new Set(Object.keys(flashed)), [flashed]);
 }
 
-function LapseMark() {
-  return (
-    <svg viewBox="0 0 32 32" width="26" height="26" aria-hidden className="lp-mark">
-      <circle cx="16" cy="16" r="12" fill="none" stroke="currentColor" strokeWidth="4" strokeDasharray="60 76" strokeLinecap="round" transform="rotate(-90 16 16)" />
-      <circle cx="16" cy="16" r="3.5" fill="var(--coral)" />
-    </svg>
-  );
-}
-
 const STEPS: { id: Screen; label: string }[] = [
-  { id: "add", label: "Add charges" },
-  { id: "decide", label: "Keep or cancel" },
-  { id: "done", label: "Cancel & save" },
+  { id: "add", label: "Add" },
+  { id: "decide", label: "Decide" },
+  { id: "done", label: "Save" },
 ];
 
 export function LapseApp() {
@@ -200,17 +192,16 @@ export function LapseApp() {
     <div className="lp">
       <div className="lp-col">
         <header className="lp-top">
-          <div className="lp-brand">
-            <LapseMark />
-            <span>Lapse</span>
-          </div>
+          <a className="lp-brand" href="/" aria-label="Lapse home">
+            <LapseLogo size={22} />
+          </a>
           {rows.length > 0 && (
             <button
               type="button"
               className="lp-ask"
               onClick={() => ask("Go through my undecided subscriptions with me, one at a time, soonest charge first.")}
             >
-              <IconSparkles size={16} stroke={1.8} /> Go through them with Lapse
+              <IconSparkles size={16} stroke={1.8} /> Ask Lapse
             </button>
           )}
         </header>

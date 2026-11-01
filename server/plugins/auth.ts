@@ -57,7 +57,7 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
 
 export default createToolkitAuthPlugin({
   workspaceAppPublicPaths: ["/"],
-  rootAuth: true,
+  rootAuth: false,
   marketing: false,
   renderSignInPage: (props: AuthPageProps) => renderAuthPage(props) + demoStrip(props.appBasePath ?? ""),
 });
