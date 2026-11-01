@@ -204,7 +204,7 @@ export function LapseApp() {
 
   return (
     <div className="lp">
-      <div className="lp-col">
+      <div className={`lp-col${screen === "decide" ? " lp-col--wide" : ""}`}>
         <nav className="lp-steps" aria-label="Steps">
           {STEPS.map((s, i) => {
             const enabled = s.id === "add" || rows.length > 0;

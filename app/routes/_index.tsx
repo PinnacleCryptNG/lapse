@@ -58,63 +58,87 @@ function DemoButton({ label = "Try the demo" }: { label?: string }) {
   );
 }
 
-const DECK = [
-  { name: "FocusFlow Pro", amt: 39.99, per: "/year", yearly: 39.99, due: "Turns paid in 3 days", chip: "Free trial", verdict: "cancel" },
-  { name: "Netflix", amt: 15.49, per: "/month", yearly: 0, due: "Charges in 2 days", chip: "Monthly", verdict: "keep" },
-  { name: "iCloud+", amt: 2.99, per: "/month", yearly: 35.88, due: "Charges tomorrow", chip: "Monthly", verdict: "cancel" },
-  { name: "Canva Pro", amt: 15, per: "/month", yearly: 180, due: "Price went up 16%", chip: "Price rise", verdict: "cancel" },
-  { name: "Spotify", amt: 11.99, per: "/month", yearly: 0, due: "Charges in 5 days", chip: "Monthly", verdict: "keep" },
-] as const;
-const STEP_MS = 2600;
-const usd = (n: number) => `$${n.toLocaleString("en-US", { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 })}`;
+type Hit = { name: string; tag: string; v: "keep" | "cancel"; yearly: number };
+const LINES: { d: string; t: string; a: number; hit?: Hit }[] = [
+  { d: "02 Oct", t: "GROCERY MART #214", a: -23.4 },
+  { d: "03 Oct", t: "NETFLIX.COM", a: -15.49, hit: { name: "Netflix", tag: "every month", v: "keep", yearly: 0 } },
+  { d: "04 Oct", t: "TRANSFER FROM ADA", a: 200 },
+  { d: "06 Oct", t: "FOCUSFLOW* TRIAL", a: 0, hit: { name: "FocusFlow Pro", tag: "trial ends in 3 days", v: "cancel", yearly: 39.99 } },
+  { d: "08 Oct", t: "UBER *TRIP", a: -6.2 },
+  { d: "09 Oct", t: "CANVA* 104-2219", a: -15, hit: { name: "Canva", tag: "price up 16%", v: "cancel", yearly: 180 } },
+  { d: "11 Oct", t: "CAFE NERO", a: -4.5 },
+  { d: "12 Oct", t: "APPLE.COM/BILL", a: -2.99, hit: { name: "iCloud", tag: "every month", v: "cancel", yearly: 35.88 } },
+];
+const HITS = LINES.map((l, i) => (l.hit ? i : -1)).filter((i) => i >= 0);
+const TICK_MS = 480;
+const SCAN_END = LINES.length;
+const DECIDE_AT = SCAN_END + 2;
+const LOOP = DECIDE_AT + HITS.length + 8;
+const usd = (n: number) => `$${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const signed = (n: number) => (n > 0 ? `+${usd(n)}` : n < 0 ? `−${usd(-n)}` : usd(0));
 
-function Receipt({ c, className, style }: { c: (typeof DECK)[number]; className: string; style?: React.CSSProperties }) {
-  return (
-    <div className={`ld-r ${className}`} style={style}>
-      <span className={`ld-r__stamp ld-r__stamp--${c.verdict}`}>{c.verdict === "keep" ? "KEEP" : "CANCEL"}</span>
-      <span className="ld-r__head">
-        <Avatar name={c.name} size={40} />
-        <span className={`ld-r__chip${c.chip === "Free trial" || c.chip === "Price rise" ? " is-hot" : ""}`}>{c.chip}</span>
-      </span>
-      <b className="ld-r__name">{c.name}</b>
-      <span className="ld-r__amt">
-        {usd(c.amt)}
-        <small>{c.per}</small>
-      </span>
-      <span className="ld-r__tear" aria-hidden />
-      <span className="ld-r__due">{c.due}</span>
-    </div>
-  );
-}
-
-function Deck() {
-  const [i, setI] = useState(0);
-  const [saved, setSaved] = useState(0);
+function Scan() {
+  const [t, setT] = useState(0);
   useEffect(() => {
-    const t = setTimeout(() => {
-      const c = DECK[i % DECK.length]!;
-      setSaved((s) => (i % DECK.length === 0 ? c.yearly : s + c.yearly));
-      setI((n) => n + 1);
-    }, STEP_MS);
-    return () => clearTimeout(t);
-  }, [i]);
-  const shown = useTicker(saved, 900);
-  const at = (k: number) => DECK[(i + k) % DECK.length]!;
-  const prev = i > 0 ? DECK[(i - 1) % DECK.length]! : null;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setT(LOOP - 1);
+      return;
+    }
+    const id = setInterval(() => setT((n) => (n + 1) % LOOP), TICK_MS);
+    return () => clearInterval(id);
+  }, []);
+  const decided = (i: number) => t >= DECIDE_AT + HITS.indexOf(i);
+  const saved = HITS.filter(decided).reduce((s, i) => s + LINES[i]!.hit!.yearly, 0);
+  const shown = useTicker(Math.round(saved * 100), 700) / 100;
+  const scanning = t < SCAN_END;
+  const bubble = scanning
+    ? "Reading your statement…"
+    : t < DECIDE_AT
+      ? `Found ${HITS.length} repeat charges. 3 look forgotten.`
+      : t < DECIDE_AT + HITS.length
+        ? "Cancel the ones you don't use?"
+        : "Done. Cancel messages are ready.";
   return (
-    <div className="ld-deck" aria-hidden>
-      <Receipt c={at(2)} className="ld-r--back2" key={`b2-${i}`} />
-      <Receipt c={at(1)} className="ld-r--back1" key={`b1-${i}`} />
-      <Receipt c={at(0)} className="ld-r--top" key={`t-${i}`} />
-      {prev && <Receipt c={prev} className={`ld-r--out ld-r--out-${prev.verdict}`} key={`o-${i}`} />}
+    <div className="ld-scan" aria-hidden>
+      <div className={`ld-st${t === 0 ? " is-reset" : ""}`}>
+        <div className="ld-st__head">
+          <b>Statement</b>
+          <span className={`ld-st__pill${scanning ? " is-live" : ""}`}>{scanning ? "Scanning" : `${HITS.length} repeat charges`}</span>
+        </div>
+        <ol className="ld-st__rows">
+          {LINES.map((l, i) => {
+            const found = l.hit && (t > i || !scanning);
+            const done = l.hit && decided(i);
+            return (
+              <li
+                key={l.t}
+                className={`ld-st__row${l.hit ? " is-hit" : ""}${scanning && t === i ? " is-scan" : ""}${found ? " is-found" : ""}${done ? ` is-${l.hit!.v}` : ""}`}
+              >
+                <span className="ld-st__d">{l.d}</span>
+                <span className="ld-st__t">
+                  <span className="ld-st__desc">{l.t}</span>
+                  {l.hit && (
+                    <span className="ld-st__tag">
+                      <Avatar name={l.hit.name} size={16} />
+                      {l.hit.name} · {l.hit.tag}
+                    </span>
+                  )}
+                </span>
+                <span className="ld-st__a">{signed(l.a)}</span>
+                {l.hit && <span className={`ld-st__stamp ld-st__stamp--${l.hit.v}`}>{l.hit.v === "keep" ? "KEEP" : "CANCEL"}</span>}
+              </li>
+            );
+          })}
+        </ol>
+      </div>
+      <div className="ld-bubble" key={bubble}>
+        {bubble}
+      </div>
       <div className="ld-saved">
         <LapseMark size={16} />
         <span>
-          Saved <b>{usd(Math.round(shown * 100) / 100)}</b>/yr
+          Saved <b>{usd(shown)}</b>/yr
         </span>
-      </div>
-      <div className="ld-bubble" key={`q-${i}`}>
-        {at(0).verdict === "cancel" ? `${at(0).name}: ${at(0).due.toLowerCase()}. Cancel it?` : `${at(0).name}: you use this. Keep it?`}
       </div>
     </div>
   );
@@ -181,7 +205,7 @@ export default function Landing() {
               </a>
             </div>
           </div>
-          <Deck />
+          <Scan />
         </section>
 
         <section className="ld-feats">

@@ -1,8 +1,8 @@
-import { IconCheck, IconX } from "@tabler/icons-react";
+import { IconCheck, IconReceipt, IconX } from "@tabler/icons-react";
 import { useEffect, useRef, useState } from "react";
 
 import { Avatar } from "./Avatar";
-import { CADENCE_WORD, dueText, longDate, money, PER, type Sub, tipFor } from "./format";
+import { CADENCE_WORD, dueShort, dueText, longDate, money, PER, type Sub, tipFor } from "./format";
 import { LapseMark } from "./Logo";
 
 const SWIPE = 110;
@@ -60,6 +60,13 @@ function TopCard({
           </span>
         </div>
       </div>
+      {row.rawDescriptor && row.rawDescriptor.toLowerCase() !== row.merchant.toLowerCase() && (
+        <p className="lp-card__seen" title="How it appears on your statement">
+          <IconReceipt size={14} stroke={1.8} />
+          <span>{row.rawDescriptor}</span>
+          {row.lastChargeDate && <em>last {longDate(row.lastChargeDate)}</em>}
+        </p>
+      )}
       {(flashed || row.status === "unsure") && (
         <div className="lp-card__tags">
           {row.status === "unsure" && <span className="lp-tag lp-tag--unsure">Check this one</span>}
@@ -182,6 +189,27 @@ export function DecideScreen({
         )}
       </div>
       <p className="lp-hint">Swipe, or use ← →</p>
+      {queue.length > 1 && (
+        <aside className="lp-next" aria-label="Up next">
+          <h3>Up next</h3>
+          <ol>
+            {queue.slice(1, 7).map((r, i) => (
+              <li key={r.id} style={{ "--i": i } as React.CSSProperties}>
+                <Avatar name={r.merchant} size={28} />
+                <span>
+                  <b>{r.merchant}</b>
+                  <small>
+                    {money(r.amountMinor, r.currency)}
+                    {PER[r.cadence]}
+                  </small>
+                </span>
+                <em className={r.daysLeft !== null && r.daysLeft <= 3 ? "is-hot" : ""}>{dueShort(r.daysLeft)}</em>
+              </li>
+            ))}
+          </ol>
+          {queue.length > 7 && <p>+{queue.length - 7} more</p>}
+        </aside>
+      )}
     </section>
   );
 }
