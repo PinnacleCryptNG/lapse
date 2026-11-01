@@ -208,8 +208,8 @@
 
 .ld-deck { position: relative; height: 400px; max-width: 420px; width: 100%; margin: 0 auto; }
 .ld-card { position: absolute; inset: 30px 10px auto; height: 250px; background: var(--milk); color: var(--ink); border-radius: 28px; padding: 24px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 30px 60px rgba(0,0,0,.45); }
-.ld-card--2 { transform: translateY(30px) scale(.88); background: #8f86ad; }
-.ld-card--1 { transform: translateY(15px) scale(.94); background: #cfc7e3; }
+.ld-card--2 { z-index: 0; transform: translateY(30px) scale(.88); background: #8f86ad; }
+.ld-card--1 { z-index: 1; transform: translateY(15px) scale(.94); background: #cfc7e3; }
 .ld-card--1 > *, .ld-card--2 > * { visibility: hidden; }
 .ld-card--0 { z-index: 2; animation: ld-swipe 9s 1.6s infinite; }
 .ld-card__stamp { position: absolute; top: 22px; right: 22px; padding: 3px 10px; border: 3px solid; border-radius: 10px; font: 800 20px var(--display); letter-spacing: .06em; transform: rotate(10deg); opacity: 0; }
@@ -245,7 +245,7 @@
 @keyframes ld-pulse { 70% { box-shadow: 0 0 0 10px rgba(200,245,96,0); } 100% { box-shadow: 0 0 0 0 rgba(200,245,96,0); } }
 @keyframes ld-strike { to { transform: scaleX(1); } }
 @keyframes ld-stamp { 0%, 14% { opacity: 0; transform: rotate(10deg) scale(1.6); } 20%, 30% { opacity: 1; transform: rotate(10deg) scale(1); } 40%, 100% { opacity: 0; } }
-@keyframes ld-swipe { 0%, 26% { transform: none; opacity: 1; } 36% { transform: translateX(-120%) rotate(-14deg); opacity: 0; } 37%, 80% { transform: translateY(15px) scale(.94); opacity: 0; } 90%, 100% { transform: none; opacity: 1; } }
+@keyframes ld-swipe { 0%, 26% { transform: none; opacity: 1; } 34% { transform: translateX(-120%) rotate(-14deg); opacity: 0; } 35%, 40% { transform: translateY(15px) scale(.94); opacity: 0; } 48%, 100% { transform: none; opacity: 1; } }
 @keyframes ld-promote { 0%, 8% { transform: translateY(14px) scale(.95); opacity: .8; } 14%, 80% { transform: none; opacity: 1; z-index: 2; } 90%, 100% { transform: translateY(14px) scale(.95); opacity: .8; } }
 @keyframes ld-bubble { 0%, 4% { opacity: 0; transform: translateY(10px) scale(.95); } 8%, 28% { opacity: 1; transform: none; } 34%, 100% { opacity: 0; transform: translateY(6px); } }
 
@@ -263,3 +263,5 @@
 .lp-cancel__write .lp-select { flex: 0 0 auto; min-height: 44px; }
 .lp-cancel__write .lp-btn, .lp-cancel__actions .lp-btn { min-height: 44px; font-size: 15px; border-radius: 14px; }
 .lp-cancel__foot { padding-top: 8px; }
+.ld { overflow-x: hidden; }
+.ld-deck { clip-path: inset(-80px -80px -80px 0); }
