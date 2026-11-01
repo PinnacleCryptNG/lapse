@@ -110,6 +110,17 @@ export function brandScript(appBasePath: string): string {
   const css = AUTH_CSS.split("__BASE__").join(base);
   return `<script>(function(){
 var CSS=${JSON.stringify(css)},HTML=${JSON.stringify(brandHtml(base))},BASE=${JSON.stringify(base)};
+function endDemo(){
+  if(!/(?:^|; )an_session_hint=/.test(document.cookie))return;
+  try{
+    var x=new XMLHttpRequest();x.open("GET",BASE+"/_agent-native/auth/session",false);x.withCredentials=true;x.send();
+    var s=JSON.parse(x.responseText||"{}");
+    if(s&&typeof s.email==="string"&&s.email.slice(-15)==="@demo.lapse.app"){
+      var y=new XMLHttpRequest();y.open("POST",BASE+"/_agent-native/auth/logout",false);y.withCredentials=true;y.send();
+    }
+  }catch(e){}
+}
+endDemo();
 var st,top,brand;
 function build(){
   st=document.createElement("style");st.textContent=CSS;
