@@ -1,4 +1,4 @@
-import { LedgerPage } from "@/components/ledger/LedgerPage";
+import { LapseApp } from "@/components/lapse/LapseApp";
 
 export function meta() {
   return [
@@ -11,5 +11,5 @@ export function meta() {
 }
 
 export default function LedgerRoute() {
-  return <LedgerPage />;
+  return <LapseApp />;
 }

@@ -1,6 +1,6 @@
 # Lapse — Agent Guide
 
-Lapse finds subscriptions and free trials that are about to charge the user and helps them cancel. The user and the agent work on ONE shared, live renewal table at `/home` ("Receipt Ledger"). Tagline: "Never pay for something you forgot you had."
+Lapse finds subscriptions and free trials that are about to charge the user and helps them cancel. The user and the agent work on ONE shared, live list of subscription cards at `/ledger`, shown as three screens: Add charges → Keep or cancel (one card at a time) → Cancel & save. Tagline: "Never pay for something you forgot you had."
 
 ## Lapse agent rules (runtime)
 
@@ -16,14 +16,14 @@ Lapse finds subscriptions and free trials that are about to charge the user and 
 
 - `server/db/schema.ts` — `subscriptions`, `cancel_kits`, `imports`; migrations in `server/plugins/db.ts` (`lapse_migrations`).
 - `server/lib/parse.ts` — deterministic statement/CSV/email parsers and recurring detection (no LLM). `server/lib/store.ts` — owner-scoped persistence. `server/sample-data.ts` — fictional, relative-date sample.
-- `actions/` — every capability (import-statement, detect-recurring, list-subscriptions, upcoming-renewals, update-subscription, mark-status, draft-cancellation, get-cancel-kit, savings-summary, load-sample-data, export-ics, view-screen).
-- `app/routes/home.tsx` + `app/components/ledger/` — Receipt Ledger UI; all data through `useActionQuery` / `useActionMutation`.
+- `actions/` — every capability (add-charges, list-subscriptions, upcoming-renewals, update-subscription, mark-status, draft-cancellation, get-cancel-kit, savings-summary, load-sample-data, export-ics, view-screen).
+- `app/routes/ledger.tsx` + `app/components/lapse/` — the three-screen UI (`?s=add|decide|done`); all data through `useActionQuery` / `useActionMutation`.
 
 ## Template guide (Chat)
 
-Chat lives at `/chat`; the Receipt Ledger is the app home at `/ledger` (`app.homePath`). Search with `rg --hidden --follow`. Key skills: `.agents/skills/actions`, `storing-data`, `real-time-sync`, `context-awareness`, `adding-a-feature`, `frontend-design`, `security`. Local docs only: `pnpm action docs-search --query "<topic>"` / `--slug "<slug>"`; source: `pnpm action source-search --query "<pattern>"`.
+Chat lives at `/chat`; the subscription screens are the app home at `/ledger` (`app.homePath`). Search with `rg --hidden --follow`. Key skills: `.agents/skills/actions`, `storing-data`, `real-time-sync`, `context-awareness`, `adding-a-feature`, `frontend-design`, `security`. Local docs only: `pnpm action docs-search --query "<topic>"` / `--slug "<slug>"`; source: `pnpm action source-search --query "<pattern>"`.
 
 - Normal app data flows through actions; keep them deterministic. Never fabricate; verify writes by reading the row or screen.
-- `navigation` describes the view (`ledger`, `chat`, `home`) and path; use `view-screen` for selection, open row and filters, `navigate` to move the user.
+- `navigation` describes the view (`ledger`, `chat`, `home`) and path; use `view-screen` for the current screen and the card on top (`currentCardId`), `navigate` to move the user.
 - UI feedback target 100 ms; acknowledge before network work.
 - Guarded verification: run `pnpm agent-native:doctor`; fix findings before done.

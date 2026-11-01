@@ -27,8 +27,8 @@ export default defineAction({
     }
     await getDb()
       .update(subscriptions)
-      .set({ status, decidedBy: actor, updatedAt: nowIso() })
+      .set({ status, decidedBy: status === "detected" ? ("agent" as const) : actor, updatedAt: nowIso() })
       .where(and(eq(subscriptions.id, id), eq(subscriptions.ownerEmail, owner)));
-    return { id, status, decidedBy: actor, savings: await savingsSummary(owner) };
+    return { id, status, decidedBy: status === "detected" ? ("agent" as const) : actor, savings: await savingsSummary(owner) };
   },
 });

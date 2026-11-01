@@ -4,7 +4,7 @@ import { z } from "zod";
 
 export default defineAction({
   description:
-    "Read what the user is looking at in Lapse: navigation, the subscription rows they have selected (selectedSubscriptionIds), the row open in the detail sheet, and the active filter. Call this when the user says 'this' or 'these'.",
+    "Read what the user is looking at in Lapse: which screen (add, decide or done) and, on the decide screen, the subscription card on top (currentCardId). Call this when the user says 'this' or 'this one'.",
   schema: z.object({}),
   http: false,
   readOnly: true,
@@ -15,9 +15,9 @@ export default defineAction({
     const screen: Record<string, unknown> = {};
     if (navigation) screen.navigation = navigation;
     if (selection) {
+      screen.screen = selection.screen ?? null;
+      screen.currentCardId = selection.openId ?? null;
       screen.selectedSubscriptionIds = selection.subscriptionIds ?? [];
-      screen.openSubscriptionId = selection.openId ?? null;
-      screen.activeFilter = selection.filter ?? null;
     }
 
     if (Object.keys(screen).length === 0) {

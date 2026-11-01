@@ -11,6 +11,7 @@ import {
   parseDate,
   parseEmails,
   parseEmailsDetailed,
+  guessImportKind,
   parseStatement,
 } from "./parse";
 
@@ -262,5 +263,16 @@ describe("parseEmails on a mixed paste", () => {
       ["iCloud", "2026-12-02"],
       ["Spotify", "2026-12-06"],
     ]);
+  });
+});
+
+describe("guessImportKind", () => {
+  it("tells CSV, emails and statement lines apart", () => {
+    expect(guessImportKind("Date,Description,Amount,Currency\n2026-10-03,NETFLIX,7000,NGN")).toBe("csv");
+    expect(guessImportKind("From: Spotify <no-reply@spotify.com>\nYour receipt")).toBe("email");
+    expect(guessImportKind("Your free trial of Canva Pro ends on 4 Nov 2026. You'll be charged $15.00/month.")).toBe("email");
+    expect(
+      guessImportKind("03 Oct 2026 NETFLIX.COM 7,000.00\n03 Sep 2026 NETFLIX.COM 7,000.00\n10 Oct 2026 SPOTIFY P1 $11.99\n10 Sep 2026 SPOTIFY P1 $11.99"),
+    ).toBe("statement");
   });
 });

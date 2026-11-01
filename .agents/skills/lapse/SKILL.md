@@ -32,7 +32,8 @@ Tagline: "Never pay for something you forgot you had."
 | User intent | Actions |
 | --- | --- |
 | "Load the sample" / first run | `load-sample-data`, then `upcoming-renewals {days:14}` |
-| Pasted statement/CSV/emails | `import-statement {text, kind}` → `detect-recurring {importId}` |
+| Pasted statement/CSV/emails | `add-charges {text}` (format auto-detected) |
+| "Go through them with me" | `list-subscriptions {status:"detected"}`, one at a time: recommend, ask keep or cancel, `mark-status` |
 | "What renews this week?" | `upcoming-renewals {days:7}` |
 | "Keep / cancel / not sure" | `mark-status {id, status}` (status `keep`, `cancel`, `unsure`) |
 | "Draft a cancel kit" | `get-subscription` data via `list-subscriptions`, then write kit, `draft-cancellation` |

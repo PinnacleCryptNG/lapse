@@ -124,7 +124,7 @@ function LedgerNavLink({ collapsed }: { collapsed: boolean }) {
     <Link
       to="/ledger"
       aria-current={active ? "page" : undefined}
-      aria-label={collapsed ? "Ledger" : undefined}
+      aria-label={collapsed ? "Subscriptions" : undefined}
       className={cn(
         "flex items-center text-sidebar-accent-foreground transition-colors hover:bg-sidebar-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring",
         active && "bg-sidebar-accent",
@@ -134,7 +134,7 @@ function LedgerNavLink({ collapsed }: { collapsed: boolean }) {
       )}
     >
       <IconReceipt2 className="size-4 shrink-0" strokeWidth={1.8} />
-      <span className={collapsed ? "sr-only" : "truncate"}>Ledger</span>
+      <span className={collapsed ? "sr-only" : "truncate"}>Subscriptions</span>
     </Link>
   );
 }

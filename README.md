@@ -3,9 +3,14 @@
 **Never pay for something you forgot you had.**
 
 Lapse finds subscriptions and free trials that are about to charge you and helps
-you cancel them. You and the Lapse agent work on one shared, live renewal table
-(the "Receipt Ledger"). You stamp rows KEEP / VOID / ?, the agent fills in and
-questions rows, and every change shows up on both sides straight away.
+you cancel them, in three screens:
+
+1. **Add charges**: paste a bank statement, a CSV or subscription emails (or try the sample).
+2. **Keep or cancel**: one card per subscription, soonest charge first. Tap or swipe.
+3. **Cancel & save**: what you'll save a year, with a cancel message ready to send for each one.
+
+You and the Lapse agent work on the same live cards: ask it to "go through them with me"
+and its decisions and messages appear on your screen straight away.
 
 Lapse never sends emails, submits forms or contacts any service. Cancelling
 produces a **draft kit**: steps and a short message in your language. You copy
@@ -45,8 +50,7 @@ and external MCP clients all call the same actions.
 
 | Action | Method | MCP | What it does |
 | --- | --- | --- | --- |
-| `import-statement` | POST | yes | Store pasted statement, CSV or email text and parse it into charge candidates |
-| `detect-recurring` | POST | yes | Group an import into recurring rows (cadence, next charge, confidence, flags) |
+| `add-charges` | POST | no | Detect the format of pasted statement, CSV or email text, parse it, and add recurring rows (cadence, next charge, confidence, flags) |
 | `list-subscriptions` | GET | yes | Rows filtered by status, days ahead or currency, sorted by next charge |
 | `upcoming-renewals` | GET | yes | Charges in the next N days (default 7) plus totals per currency |
 | `update-subscription` | POST | yes | Edit a row as `user` or `agent`; agents cannot change a user's decision |
@@ -54,9 +58,8 @@ and external MCP clients all call the same actions.
 | `draft-cancellation` | POST | yes | Save a cancellation kit the agent has written. Never sends anything |
 | `get-cancel-kit` | GET | yes | Read the latest kit for a row |
 | `savings-summary` | GET | yes | Yearly savings from cancelled rows, per currency |
-| `view-screen` | — | — | What the user is looking at: selected rows, open row, filter |
+| `view-screen` | — | — | What the user is looking at: the screen and the card on top |
 | `load-sample-data` | POST | no | Seed the fictional sample (idempotent) |
-| `export-ics` | GET | no | Upcoming charges as an iCalendar file |
 
 ## Run locally
 
@@ -126,4 +129,4 @@ Sample data is fictional, with illustrative amounts.
 
 Built from the Agent-Native chat template on or after 27 Oct 2026. New for
 Lapse: everything in `actions/`, `server/lib/`, `server/db/`, `app/routes/`,
-`app/components/ledger/` and the Receipt Ledger design.
+`app/components/lapse/` and the three-screen design.

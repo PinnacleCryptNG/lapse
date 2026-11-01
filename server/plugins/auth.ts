@@ -4,19 +4,21 @@ import { createToolkitAuthPlugin, renderAuthPage } from "@agent-native/toolkit/a
 /**
  * Sign-in page plus a "Try the demo" strip. The button creates a throwaway
  * account through the framework's own register/login endpoints, so every
- * visitor gets a private ledger without typing a password.
+ * visitor gets a private demo without typing a password.
  */
-const DEMO_CSS = `.lapse-demo{position:relative;z-index:5;max-width:420px;margin:24px auto 0;padding:22px 22px 20px;background:#f4efe6;color:#1d1a16;
-font-family:"JetBrains Mono",ui-monospace,monospace;border-radius:2px;box-shadow:0 18px 30px rgba(0,0,0,.45);
--webkit-mask:conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) bottom/18px 51% repeat-x,conic-gradient(from 135deg at top,#0000,#000 1deg 89deg,#0000 90deg) top/18px 51% repeat-x;
-mask:conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) bottom/18px 51% repeat-x,conic-gradient(from 135deg at top,#0000,#000 1deg 89deg,#0000 90deg) top/18px 51% repeat-x}
-.lapse-demo h2{font:400 40px/1 "Instrument Serif",Georgia,serif;margin:6px 0 4px}
-.lapse-demo p{margin:0 0 10px;font-size:13px;line-height:1.5}
-.lapse-demo em{font:italic 19px/1.2 "Instrument Serif",Georgia,serif;display:block;margin-bottom:10px;color:#4a443c}
-.lapse-demo button{width:100%;height:46px;border:0;background:#ff6a1a;color:#1a0d05;font:700 13px "JetBrains Mono",monospace;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;border-radius:2px}
+const DEMO_CSS = `.lapse-demo{position:relative;z-index:5;max-width:420px;margin:24px auto 0;padding:24px 22px 20px;background:#15102a;color:#fbf8ff;
+font-family:"Bricolage Grotesque Variable","Bricolage Grotesque",system-ui,sans-serif;border-radius:28px;box-shadow:0 24px 48px rgba(21,16,42,.35);
+background-image:radial-gradient(120% 70% at 50% -20%,#2c2160 0%,transparent 60%)}
+.lapse-demo h2{font:800 40px/1 "Bricolage Grotesque Variable","Bricolage Grotesque",system-ui,sans-serif;letter-spacing:-.035em;margin:0 0 6px}
+.lapse-demo h2 i{display:inline-block;width:12px;height:12px;border-radius:50%;background:#ff4d6d;margin-left:4px}
+.lapse-demo p{margin:0 0 14px;font:400 15px/1.5 system-ui,sans-serif;color:#c9c3e3}
+.lapse-demo ol{margin:0 0 16px;padding:0;list-style:none;display:grid;gap:6px;font:600 14px system-ui,sans-serif}
+.lapse-demo ol li{display:flex;gap:10px;align-items:center}
+.lapse-demo ol b{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:#2e2550;font-size:12px}
+.lapse-demo button{width:100%;height:56px;border:0;background:#ffd23f;color:#1a1530;font:700 17px system-ui,sans-serif;cursor:pointer;border-radius:16px;box-shadow:0 4px 0 #c9a00f}
 .lapse-demo button:disabled{opacity:.6;cursor:wait}
-.lapse-demo small{display:block;margin-top:10px;font-size:11px;color:#6b6458;text-align:center}
-.lapse-demo .err{color:#c8312b}
+.lapse-demo small{display:block;margin-top:12px;font:400 12px system-ui,sans-serif;color:#a9a2c6;text-align:center}
+.lapse-demo .err{color:#ff8fa3}
 .auth-root .auth-page{min-height:0!important;align-items:flex-start!important}
 .auth-root .auth-centered{padding-top:20px!important;padding-bottom:40px!important}
 @media (max-width:480px){.lapse-demo{margin:14px 12px 0}}
@@ -31,14 +33,15 @@ function mount(){
   if(document.getElementById("lapse-demo"))return;
   var st=document.createElement("style");st.textContent=CSS;document.head.appendChild(st);
   var el=document.createElement("section");el.id="lapse-demo";el.className="lapse-demo";
-  el.innerHTML='<h2>Lapse</h2><em>Never pay for something you forgot you had.</em>'+
-    '<p>Paste a bank statement. Lapse finds the subscriptions and free trials about to charge you. You and the AI decide what to keep, and it writes the cancellation message for you to send.</p>'+
+  el.innerHTML='<h2>Lapse<i></i></h2>'+
+    '<p>Never pay for something you forgot you had.</p>'+
+    '<ol><li><b>1</b>Paste your bank statement or emails</li><li><b>2</b>Keep or cancel each subscription</li><li><b>3</b>Send the cancel messages Lapse writes</li></ol>'+
     '<button type="button">Try the demo, no sign-up</button>'+
-    '<small>Opens a private demo ledger with sample data. Or sign in below.</small>';
+    '<small>Opens a private demo with sample data. Or sign in below.</small>';
   document.body.insertBefore(el,document.body.firstChild);
   var btn=el.querySelector("button"),note=el.querySelector("small");
   btn.addEventListener("click",function(){
-    btn.disabled=true;btn.textContent="Printing your receipt…";
+    btn.disabled=true;btn.textContent="Setting up your demo…";
     var id=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random()).replace(/[^a-z0-9]/gi,"").slice(0,12).toLowerCase();
     var cred={email:"demo-"+id+"@demo.lapse.app",password:"Lapse-demo-"+(crypto.randomUUID?crypto.randomUUID():id+id)};
     function post(p){return fetch(BASE+p,{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify(cred)})

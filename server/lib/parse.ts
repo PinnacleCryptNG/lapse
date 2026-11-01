@@ -781,3 +781,23 @@ export function emailToCandidate(f: EmailFinding): Candidate {
 export function perYear(cadence: Cadence): number {
   return cadence === "weekly" ? 52 : cadence === "monthly" ? 12 : cadence === "quarterly" ? 4 : 1;
 }
+
+/** Which parser fits pasted text: a CSV export, billing emails, or bank-statement lines. */
+export function guessImportKind(text: string): "statement" | "csv" | "email" {
+  const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  const head = lines[0] ?? "";
+  if (
+    lines.length > 1 &&
+    (head.match(/[,;\t]/g)?.length ?? 0) >= 2 &&
+    /date/i.test(head) &&
+    /amount|debit|value|description|narration|details|payee/i.test(head)
+  ) {
+    return "csv";
+  }
+  if (/^(?:from|subject)\s*:/im.test(text)) return "email";
+  const emailish =
+    /\b(?:subscription|subscribed|membership|free trial|trial|renews?|renewal|renewed|receipt|invoice|billing date|next payment|your plan)\b/i.test(text);
+  const statementLines = parseStatement(text).charges.length;
+  if (emailish && statementLines < Math.max(3, lines.length * 0.5)) return "email";
+  return "statement";
+}
