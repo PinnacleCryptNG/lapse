@@ -110,13 +110,11 @@ export function brandScript(appBasePath: string): string {
   const css = AUTH_CSS.split("__BASE__").join(base);
   return `<script>(function(){
 var CSS=${JSON.stringify(css)},HTML=${JSON.stringify(brandHtml(base))},BASE=${JSON.stringify(base)};
-function mount(){
-  if(document.querySelector(".lx-brand"))return;
-  var host=document.querySelector(".auth-centered");if(!host)return;
-  var st=document.createElement("style");st.textContent=CSS;document.head.appendChild(st);
+var st,top,brand;
+function build(){
+  st=document.createElement("style");st.textContent=CSS;
   var tmp=document.createElement("div");tmp.innerHTML=HTML;
-  document.body.appendChild(tmp.querySelector(".lx-top"));
-  var brand=tmp.querySelector(".lx-brand");host.insertBefore(brand,host.firstChild);
+  top=tmp.querySelector(".lx-top");brand=tmp.querySelector(".lx-brand");
   var btn=brand.querySelector(".lx-demo"),note=brand.querySelector(".lx-note"),label=btn.innerHTML;
   btn.addEventListener("click",function(){
     btn.disabled=true;btn.textContent="Opening your demo…";
@@ -129,6 +127,21 @@ function mount(){
       .catch(function(e){btn.disabled=false;btn.innerHTML=label;note.className="lx-note err";note.textContent="Couldn't open the demo ("+e.message+"). Try again, or use your account below.";});
   });
 }
-if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",mount);else mount();
+function mount(){
+  if(!st)build();
+  if(!st.isConnected)document.head.appendChild(st);
+  if(!top.isConnected)document.body.appendChild(top);
+  var host=document.querySelector(".auth-centered");
+  if(host&&brand.parentNode!==host)host.insertBefore(brand,host.firstChild);
+}
+function hydrated(){var h=document.querySelector(".auth-centered");return !!h&&Object.keys(h).some(function(k){return k.indexOf("__react")===0;});}
+function start(){
+  var t0=Date.now();
+  (function wait(){
+    if(!hydrated()&&Date.now()-t0<4000)return requestAnimationFrame(wait);
+    setTimeout(function(){mount();new MutationObserver(mount).observe(document.body,{childList:true,subtree:true});},0);
+  })();
+}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start);else start();
 })();</script>`;
 }
