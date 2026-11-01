@@ -2,6 +2,7 @@ import { appPath } from "@agent-native/core/client/api-path";
 import { IconArrowRight, IconClipboardText, IconMailForward } from "@tabler/icons-react";
 import { useEffect, useRef, useState } from "react";
 
+import { Avatar } from "@/components/lapse/Avatar";
 import { LapseLogo, LapseMark } from "@/components/lapse/Logo";
 import { useTicker } from "@/components/lapse/useTicker";
 import { startDemo } from "@/lib/demo";
@@ -71,7 +72,10 @@ function Receipt({ c, className, style }: { c: (typeof DECK)[number]; className:
   return (
     <div className={`ld-r ${className}`} style={style}>
       <span className={`ld-r__stamp ld-r__stamp--${c.verdict}`}>{c.verdict === "keep" ? "KEEP" : "CANCEL"}</span>
-      <span className={`ld-r__chip${c.chip === "Free trial" || c.chip === "Price rise" ? " is-hot" : ""}`}>{c.chip}</span>
+      <span className="ld-r__head">
+        <Avatar name={c.name} size={40} />
+        <span className={`ld-r__chip${c.chip === "Free trial" || c.chip === "Price rise" ? " is-hot" : ""}`}>{c.chip}</span>
+      </span>
       <b className="ld-r__name">{c.name}</b>
       <span className="ld-r__amt">
         {usd(c.amt)}

@@ -317,3 +317,8 @@
 .lp-conv__fig .lp-save__fig { margin: 0; }
 .lp-conv__approx { font: 600 30px/1 var(--sans); color: var(--faint); }
 .lp-conv__pick { margin-left: auto; height: 32px; padding: 0 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg-2); color: var(--text); font: 500 13px var(--mono); }
+.lp-av--logo { overflow: hidden; background: #fff; box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
+.lp-av--logo img { width: 72%; height: 72%; object-fit: contain; }
+.ld-r__head { display: flex; align-items: center; gap: 10px; }
+.ld-r .lp-av--logo { box-shadow: 0 0 0 1px #e6e0f2; }
+.ld-r__name { margin-top: 14px; }
