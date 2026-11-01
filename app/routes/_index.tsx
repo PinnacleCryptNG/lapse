@@ -1,5 +1,5 @@
 import { appPath } from "@agent-native/core/client/api-path";
-import { IconArrowRight, IconCheck, IconClipboardText, IconMailForward, IconX } from "@tabler/icons-react";
+import { IconArrowRight, IconClipboardText, IconMailForward } from "@tabler/icons-react";
 import { useEffect, useRef, useState } from "react";
 
 import { LapseLogo, LapseMark } from "@/components/lapse/Logo";
@@ -57,132 +57,60 @@ function DemoButton({ label = "Try the demo" }: { label?: string }) {
   );
 }
 
-const SCENES = ["Paste", "Decide", "Save"] as const;
-const SCENE_MS = 4200;
+const DECK = [
+  { name: "FocusFlow Pro", amt: 45000, per: "/year", yearly: 45000, due: "Turns paid in 3 days", chip: "Free trial", verdict: "cancel" },
+  { name: "Netflix", amt: 7000, per: "/month", yearly: 0, due: "Charges in 2 days", chip: "Monthly", verdict: "keep" },
+  { name: "iCloud+", amt: 1500, per: "/month", yearly: 18000, due: "Charges tomorrow", chip: "Monthly", verdict: "cancel" },
+  { name: "Canva Pro", amt: 11000, per: "/month", yearly: 132000, due: "Price went up 16%", chip: "Price rise", verdict: "cancel" },
+  { name: "Spotify", amt: 1900, per: "/month", yearly: 0, due: "Charges in 5 days", chip: "Monthly", verdict: "keep" },
+] as const;
+const STEP_MS = 2600;
+const naira = (n: number) => `₦${n.toLocaleString("en-US")}`;
 
-const LINES = ["03 Oct  NETFLIX.COM      ₦7,000", "05 Oct  SPOTIFY P1       ₦1,900", "07 Oct  SHOPRITE IKEJA  ₦23,450", "09 Oct  APPLE.COM/BILL   ₦1,500"];
-const CARDS = [
-  { name: "FocusFlow Pro", amt: "₦45,000", per: "/year", due: "Trial ends in 3 days", tip: "Free trial. It turns paid on Friday.", verdict: "cancel" },
-  { name: "Netflix", amt: "₦7,000", per: "/month", due: "Charges in 2 days", tip: "You pay this every month.", verdict: "keep" },
-  { name: "iCloud+", amt: "₦1,500", per: "/month", due: "Charges tomorrow", tip: "Easy to forget. Still using it?", verdict: "cancel" },
-];
-
-function Counter() {
-  const [go, setGo] = useState(false);
-  useEffect(() => {
-    const t = setTimeout(() => setGo(true), 350);
-    return () => clearTimeout(t);
-  }, []);
-  const n = useTicker(go ? 6300000 : 0, 1400);
-  return <span className="ld-count">₦{Math.round(n / 100).toLocaleString("en-US")}</span>;
+function Receipt({ c, className, style }: { c: (typeof DECK)[number]; className: string; style?: React.CSSProperties }) {
+  return (
+    <div className={`ld-r ${className}`} style={style}>
+      <span className={`ld-r__stamp ld-r__stamp--${c.verdict}`}>{c.verdict === "keep" ? "KEEP" : "CANCEL"}</span>
+      <span className={`ld-r__chip${c.chip === "Free trial" || c.chip === "Price rise" ? " is-hot" : ""}`}>{c.chip}</span>
+      <b className="ld-r__name">{c.name}</b>
+      <span className="ld-r__amt">
+        {naira(c.amt)}
+        <small>{c.per}</small>
+      </span>
+      <span className="ld-r__tear" aria-hidden />
+      <span className="ld-r__due">{c.due}</span>
+    </div>
+  );
 }
 
-function Phone() {
-  const [scene, setScene] = useState(0);
-  const [paused, setPaused] = useState(false);
+function Deck() {
+  const [i, setI] = useState(0);
+  const [saved, setSaved] = useState(0);
   useEffect(() => {
-    if (paused) return;
-    const t = setTimeout(() => setScene((s) => (s + 1) % SCENES.length), SCENE_MS);
+    const t = setTimeout(() => {
+      const c = DECK[i % DECK.length]!;
+      setSaved((s) => (i % DECK.length === 0 ? c.yearly : s + c.yearly));
+      setI((n) => n + 1);
+    }, STEP_MS);
     return () => clearTimeout(t);
-  }, [scene, paused]);
+  }, [i]);
+  const shown = useTicker(saved, 900);
+  const at = (k: number) => DECK[(i + k) % DECK.length]!;
+  const prev = i > 0 ? DECK[(i - 1) % DECK.length]! : null;
   return (
-    <div className="ld-stage">
-      <div className="ld-phone" aria-hidden>
-        <div className="ld-phone__top">
-          <LapseLogo size={13} />
-          <span className="ld-phone__tabs">
-            {SCENES.map((s, i) => (
-              <i key={s} className={i === scene ? "is-on" : i < scene ? "is-done" : undefined} />
-            ))}
-          </span>
-        </div>
-        <div className="ld-screen" key={scene} data-scene={SCENES[scene]}>
-          {scene === 0 && (
-            <div className="ld-s ld-s--paste">
-              <b>What&apos;s about to charge you?</b>
-              <div className="ld-paste">
-                {LINES.map((l, i) => (
-                  <code key={l} style={{ "--d": `${i * 380}ms` } as React.CSSProperties}>
-                    {l}
-                  </code>
-                ))}
-                <span className="ld-caret" />
-              </div>
-              <span className="ld-found">
-                <IconCheck size={14} stroke={2.6} /> Found 3 subscriptions
-              </span>
-            </div>
-          )}
-          {scene === 1 && (
-            <div className="ld-s ld-s--decide">
-              {CARDS.map((c, i) => (
-                <div key={c.name} className={`ld-card ld-card--${i} ld-card--${c.verdict}`}>
-                  <span className={`ld-stamp ld-stamp--${c.verdict}`}>{c.verdict === "keep" ? "KEEP" : "CANCEL"}</span>
-                  <span className="ld-card__row">
-                    <span className="ld-av">{c.name[0]}</span>
-                    <span>
-                      <b>{c.name}</b>
-                      <small>{c.due}</small>
-                    </span>
-                  </span>
-                  <span className="ld-card__amt">
-                    {c.amt}
-                    <small>{c.per}</small>
-                  </span>
-                  <span className="ld-card__tip">
-                    <LapseMark size={12} /> {c.tip}
-                  </span>
-                </div>
-              ))}
-              <div className="ld-choices">
-                <span className="ld-x">
-                  <IconX size={14} stroke={2.6} /> Cancel
-                </span>
-                <span className="ld-v">
-                  <IconCheck size={14} stroke={2.6} /> Keep
-                </span>
-              </div>
-            </div>
-          )}
-          {scene === 2 && (
-            <div className="ld-s ld-s--save">
-              <small>You&apos;ll save each year</small>
-              <Counter />
-              {[
-                ["FocusFlow Pro", "Message ready"],
-                ["iCloud+", "Cancelled"],
-              ].map(([n, s], i) => (
-                <span key={n} className="ld-row" style={{ "--d": `${500 + i * 350}ms` } as React.CSSProperties}>
-                  <span className="ld-av">{n![0]}</span>
-                  <b>{n}</b>
-                  <em className={s === "Cancelled" ? "is-done" : undefined}>{s}</em>
-                </span>
-              ))}
-              <span className="ld-note" style={{ "--d": "1300ms" } as React.CSSProperties}>
-                <IconMailForward size={14} stroke={2} /> Lapse wrote the message. You send it.
-              </span>
-            </div>
-          )}
-        </div>
+    <div className="ld-deck" aria-hidden>
+      <Receipt c={at(2)} className="ld-r--back2" key={`b2-${i}`} />
+      <Receipt c={at(1)} className="ld-r--back1" key={`b1-${i}`} />
+      <Receipt c={at(0)} className="ld-r--top" key={`t-${i}`} />
+      {prev && <Receipt c={prev} className={`ld-r--out ld-r--out-${prev.verdict}`} key={`o-${i}`} />}
+      <div className="ld-saved">
+        <LapseMark size={16} />
+        <span>
+          Saved <b>{naira(Math.round(shown))}</b>/yr
+        </span>
       </div>
-      <div className="ld-scenes" role="tablist" aria-label="How Lapse works">
-        {SCENES.map((s, i) => (
-          <button
-            key={s}
-            type="button"
-            role="tab"
-            aria-selected={i === scene}
-            className={i === scene ? "is-on" : undefined}
-            onClick={() => {
-              setScene(i);
-              setPaused(true);
-            }}
-          >
-            <span>{i + 1}</span>
-            {s}
-            {i === scene && !paused && <i style={{ animationDuration: `${SCENE_MS}ms` }} />}
-          </button>
-        ))}
+      <div className="ld-bubble" key={`q-${i}`}>
+        {at(0).verdict === "cancel" ? `${at(0).name}: ${at(0).due.toLowerCase()}. Cancel it?` : `${at(0).name}: you use this. Keep it?`}
       </div>
     </div>
   );
@@ -249,7 +177,7 @@ export default function Landing() {
               </a>
             </div>
           </div>
-          <Phone />
+          <Deck />
         </section>
 
         <section className="ld-feats">
