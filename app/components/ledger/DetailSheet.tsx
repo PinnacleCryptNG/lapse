@@ -115,7 +115,11 @@ export function DetailSheet({
 
   return (
     <Sheet open onOpenChange={(o) => !o && onClose()}>
-      <SheetContent side={phone ? "bottom" : "right"} className="lx-sheet lx-detail">
+      <SheetContent
+        side={phone ? "bottom" : "right"}
+        className="lx-sheet lx-detail"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
         <SheetTitle className="lx-serif lx-sheet__title">{row.merchant}</SheetTitle>
         <SheetDescription className="lx-mono lx-dim">
           {row.rawDescriptor ?? row.source} · confidence {row.confidence}

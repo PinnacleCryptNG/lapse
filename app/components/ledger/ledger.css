@@ -1,7 +1,12 @@
-.lx-desk {
+:root {
+  --lx-root: 1;
+}
+.lx-desk, .lx-sheet {
   --desk: #141210; --paper: #f4efe6; --paper-2: #ebe4d6; --ink: #1d1a16; --ash: #8a847c;
   --ember: #ff6a1a; --green: #2e7d4f; --red: #c8312b; --blue: #2b4fa8; --hl: #ffe45c;
   --mono: "JetBrains Mono", ui-monospace, monospace; --serif: "Instrument Serif", Georgia, serif;
+}
+.lx-desk {
   min-height: 100%; background: var(--desk); container-type: inline-size;
   background-image: radial-gradient(circle at 20% 0%, #221e1a 0, transparent 55%), radial-gradient(circle at 90% 100%, #1d1915 0, transparent 50%);
   padding: 28px 20px 64px; color: var(--ink);
@@ -100,7 +105,7 @@
 .lx-void-mark {
   position: absolute; left: 44%; top: 50%; transform: translate(-50%, -50%) rotate(-8deg); pointer-events: none; z-index: 2;
   font: 800 26px var(--mono); letter-spacing: 0.2em; color: var(--red); border: 3px double var(--red); padding: 0 10px;
-  opacity: 0.55; mix-blend-mode: multiply; animation: lx-slam 0.22s ease-out both;
+  opacity: 0.45; mix-blend-mode: multiply; animation: lx-slam 0.22s ease-out both;
 }
 .lx-row[data-status="cancel_drafted"] .lx-void-mark { font-size: 15px; color: var(--blue); border-color: var(--blue); }
 @keyframes lx-slam { from { transform: translate(-50%, -50%) rotate(-8deg) scale(1.8); opacity: 0; } }
@@ -188,4 +193,19 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .lx-receipt, .lx-row.is-agent::before, .lx-fuse--hot::after, .lx-row.is-tearing, .lx-void-mark { animation: none !important; }
+}
+.lx-steps { list-style: decimal; }
+/* Agent chat as a bottom sheet on phones */
+@media (max-width: 767px) {
+  [data-agent-sidebar-layout="mobile"] {
+    top: auto !important; bottom: 0 !important; left: 0 !important; right: 0 !important;
+    width: 100% !important; max-width: 100% !important; height: 82vh !important;
+    border-left: 0 !important; border-top: 1px solid #2a2520 !important;
+    border-radius: 18px 18px 0 0; overflow: hidden; box-shadow: 0 -18px 40px rgba(0, 0, 0, 0.35);
+    --agent-sidebar-closed-transform: translateY(calc(100% + 1px)) !important;
+  }
+  [data-agent-sidebar-layout="mobile"]::before {
+    content: ""; position: absolute; top: 7px; left: 50%; width: 40px; height: 4px; margin-left: -20px;
+    border-radius: 4px; background: rgba(120, 110, 100, 0.45); z-index: 1;
+  }
 }
