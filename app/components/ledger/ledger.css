@@ -2,7 +2,7 @@
   --desk: #141210; --paper: #f4efe6; --paper-2: #ebe4d6; --ink: #1d1a16; --ash: #8a847c;
   --ember: #ff6a1a; --green: #2e7d4f; --red: #c8312b; --blue: #2b4fa8; --hl: #ffe45c;
   --mono: "JetBrains Mono", ui-monospace, monospace; --serif: "Instrument Serif", Georgia, serif;
-  min-height: 100%; background: var(--desk);
+  min-height: 100%; background: var(--desk); container-type: inline-size;
   background-image: radial-gradient(circle at 20% 0%, #221e1a 0, transparent 55%), radial-gradient(circle at 90% 100%, #1d1915 0, transparent 50%);
   padding: 28px 20px 64px; color: var(--ink);
 }
@@ -153,11 +153,10 @@
 .lx-warn { font-size: 11px; }
 .lx-draft { display: flex; gap: 8px; }
 .lx-draft .lx-input { flex: 1; }
-@media (max-width: 1100px) {
+@container (max-width: 1000px) {
   .lx-row { grid-template-columns: 24px minmax(0, 1.5fr) minmax(120px, 1fr) 110px 44px 170px; gap: 8px; }
 }
-@media (max-width: 639px) {
-  .lx-desk { padding: 14px 8px 40px; }
+@container (max-width: 680px) {
   .lx-receipt { padding: 28px 16px 26px; }
   .lx-head { grid-template-columns: 1fr; }
   .lx-head h1 { font-size: 42px; }
@@ -181,6 +180,9 @@
   .lx-stamp { padding: 7px 12px; }
   .lx-void-mark { left: 60%; font-size: 22px; }
   .lx-perf { margin: 0 -16px 14px; }
+}
+@media (max-width: 639px) {
+  .lx-desk { padding: 14px 8px 40px; }
   .lx-fields { grid-template-columns: 1fr; }
   .lx-detail { max-height: 88vh; border-radius: 12px 12px 0 0; }
 }

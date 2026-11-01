@@ -32,10 +32,11 @@ import { useTicker } from "./useTicker";
 const FLASH_MS = 5200;
 const TEAR_MS = 750;
 
-function useAgentFlashes(rows: Sub[], localEdits: React.MutableRefObject<Map<string, number>>) {
+function useAgentFlashes(rows: Sub[], ready: boolean, localEdits: React.MutableRefObject<Map<string, number>>) {
   const seen = useRef<Map<string, string> | null>(null);
   const [flashes, setFlashes] = useState<Record<string, number>>({});
   useEffect(() => {
+    if (!ready) return;
     const prev = seen.current;
     const next = new Map(rows.map((r) => [r.id, r.updatedAt]));
     seen.current = next;
@@ -61,14 +62,15 @@ function useAgentFlashes(rows: Sub[], localEdits: React.MutableRefObject<Map<str
       });
     }, FLASH_MS + 50);
     return () => clearTimeout(t);
-  }, [rows, localEdits]);
+  }, [rows, ready, localEdits]);
   return flashes;
 }
 
-function useTearing(rows: Sub[]) {
+function useTearing(rows: Sub[], ready: boolean) {
   const prev = useRef<Map<string, string> | null>(null);
   const [tearing, setTearing] = useState<Set<string>>(new Set());
   useEffect(() => {
+    if (!ready) return;
     const before = prev.current;
     prev.current = new Map(rows.map((r) => [r.id, r.status]));
     if (!before) return;
@@ -83,7 +85,7 @@ function useTearing(rows: Sub[]) {
       });
     }, TEAR_MS);
     return () => clearTimeout(t);
-  }, [rows]);
+  }, [rows, ready]);
   return tearing;
 }
 
@@ -209,8 +211,8 @@ export function LedgerPage() {
 
   const { data, isLoading } = useActionQuery("list-subscriptions", {});
   const rows = useMemo(() => (((data as any)?.rows ?? []) as Sub[]), [data]);
-  const flashes = useAgentFlashes(rows, localEdits);
-  const tearing = useTearing(rows);
+  const flashes = useAgentFlashes(rows, data !== undefined, localEdits);
+  const tearing = useTearing(rows, data !== undefined);
 
   const mark = useActionMutation("mark-status");
   const loadSample = useActionMutation("load-sample-data", {
