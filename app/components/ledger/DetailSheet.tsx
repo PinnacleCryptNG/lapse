@@ -65,7 +65,7 @@ function Steps({ md }: { md: string }) {
   return (
     <ol className="lx-steps">
       {lines.map((l, i) => (
-        <li key={i}>{l.replace(/^(\d+[.)]|[-*])\s*/, "").replace(/\*\*(.+?)\*\*/g, "$1")}</li>
+        <li key={i}>{l.replace(/^(\d+[.)]|[-*])\s*/, "").replace(/\*+/g, "")}</li>
       ))}
     </ol>
   );
