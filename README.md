@@ -85,13 +85,18 @@ choose **Authenticate**:
 claude mcp add --transport http lapse https://<your-app>/mcp
 ```
 
-**Static bearer token.** Set `ACCESS_TOKEN` on the server (for example
-`openssl rand -hex 32`), then:
+**Per-user token.** For clients that can't run OAuth, sign in to Lapse, open
+`https://<your-app>/mcp/connect`, choose **Generate a static token → Create
+connection token**, then:
 
 ```bash
 claude mcp add --transport http lapse https://<your-app>/mcp \
-  --header "Authorization: Bearer <ACCESS_TOKEN>"
+  --header "Authorization: Bearer <connection-token>"
 ```
+
+The deployment-wide `ACCESS_TOKEN` also authenticates `/mcp`, but it carries no
+user, so Lapse's owner-scoped actions answer "Sign in first". Use OAuth or a
+connection token for real data.
 
 Then ask: *"What renews this week?"* and Claude Code calls `upcoming-renewals`.
 
